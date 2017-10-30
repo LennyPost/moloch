@@ -418,8 +418,8 @@
       } else {
         this.tableWidth = this.sumOfColWidths;
         // display a button to fit the table to the width of the window
-        // if the table is more than 5 pixels larger or smaller than the window
-        if (Math.abs(this.tableWidth - windowWidth) > 5) {
+        // if the table is more than 10 pixels larger or smaller than the window
+        if (Math.abs(this.tableWidth - windowWidth) > 10) {
           this.showFitButton = true;
         }
       }
@@ -852,13 +852,17 @@
 
     /* Fits the table to the width of the current window size */
     fitTable() {
+      // disable resizable columns so it can be initialized after columns are resized
+      $('#sessionsTable').colResizable({ disable:true });
+      colResizeInitialized = false;
+
       let windowWidth   = window.innerWidth - 45; // account for right and left margins
       let leftoverWidth = windowWidth - this.sumOfColWidths;
-      let addToEachCol  = Math.round(leftoverWidth/this.headers.length);
+      let percentChange = 1 + (leftoverWidth/this.sumOfColWidths);
 
       for (let i = 0, len = this.headers.length; i < len; ++i) {
         let header    = this.headers[i];
-        let newWidth  = header.width + addToEachCol;
+        let newWidth  = Math.floor(header.width * percentChange);
         header.width  = newWidth;
         this.colWidths[header.dbField] = newWidth;
       }
@@ -867,6 +871,8 @@
       this.showFitButton = false;
 
       this.saveColumnWidths();
+      
+      this.$timeout(() => { this.initializeColResizable(); });
     }
 
 
