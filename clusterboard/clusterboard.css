@@ -1,0 +1,10 @@
+/*! clusterboard page styles */
+
+/* general styles -------------------------------------- */
+.cursor-pointer { cursor: pointer; }
+.pointer-cursor { cursor: pointer; }
+
+.margined-top       { margin-top:    1rem; }
+.margined-bottom    { margin-bottom: 1rem; }
+.margined-top-sm    { margin-top:    .5rem;}
+.margined-bottom-sm { margin-bottom: .5rem;}

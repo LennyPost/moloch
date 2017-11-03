@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="clusterboard">
+  <head>
+    <title>Moloch Cluster Board</title>
+
+    <!-- Required meta tags always come first -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+    <!-- Bootstrap CSS http://getbootstrap.com/ -->
+    <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css">
+    <!-- FontAwesome http://fontawesome.io/ -->
+    <link rel="stylesheet" href="node_modules/font-awesome/css/font-awesome.min.css">
+
+    <link rel="stylesheet" type="text/css" href="clusterboard.css">
+
+  </head>
+  <body>
+    <div ng-controller="ClusterboardController as $ctrl"
+      class="container margined-bottom margined-top">
+
+      <div class="row">
+        <div class="col-md-12">
+          <h1>
+            <a class="btn btn-secondary active pull-right" id="autoRefresh"
+               data-toggle="tooltip" data-placement="bottom" title="Toggle auto refresh">
+              <span class="fa fa-refresh"></span>
+            </a>
+            <img src="header_logo.png" style="vertical-align:bottom;"> Moloch
+          </h1>
+          <p class="lead">Do not taunt the Happy Moloch. Please use the Happy Moloch responsibly.</p>
+        </div>
+      </div>
+
+      <!-- group -->
+      <div ng-repeat="group in $ctrl.clusterGroups">
+        <!-- group title -->
+        <div class="row" ng-if="::group.title">
+          <div class="col-md-12">
+            <h5 style="margin-bottom:.1rem;">{{::group.title}}</h5>
+            <p class="lead" style="margin-bottom:.1rem;font-size:1rem;">
+              {{::group.description}}
+            </p>
+          </div>
+        </div> <!-- /group title -->
+        <!-- clusters -->
+        <div class="row" ng-if="::group.clusters.length">
+          <div class="col-md-12">
+            <div ng-repeat="cluster in group.clusters">
+              <a ng-href="{{::cluster.href}}">{{::cluster.title}}</a>
+              <span ng-if="::(!cluster.multiviewer && !cluster.offline)">
+                <span>{{cluster.deltaBPS}} Bytes/Sec</span> |
+                <span>{{cluster.deltaTDPS}} Packet Drops/Sec</span>
+              </span>
+              <div ng-if="::cluster.description" class="small">
+                {{::cluster.description}}
+              </div>
+            </div>
+          </div>
+        </div> <!-- /clusters -->
+      </div> <!-- /group -->
+
+    </div>
+
+    <!-- jQuery first, then Bootstrap JS. -->
+    <script src="node_modules/jquery/dist/jquery.min.js"></script>
+    <!-- Angular -->
+    <script src="node_modules/angular/angular.min.js"></script>
+    <!-- Popper JS (required by bootstrap) -->
+    <script src="node_modules/popper.js/dist/umd/popper.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+
+    <script src="clusterboard.js"></script>
+
+  </body>
+</html>
