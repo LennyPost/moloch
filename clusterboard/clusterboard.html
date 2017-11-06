@@ -20,10 +20,10 @@
     <div ng-controller="ClusterboardController as $ctrl"
       class="container margined-bottom margined-top">
 
-      <div class="row">
+      <div class="row mt-4">
         <div class="col-md-12">
           <h1>
-            <a class="btn btn-secondary active pull-right" id="autoRefresh"
+            <a class="btn btn-secondary active pull-right cursor-pointer" id="autoRefresh"
                data-toggle="tooltip" data-placement="bottom" title="Toggle auto refresh">
               <span class="fa fa-refresh"></span>
             </a>
@@ -33,32 +33,64 @@
         </div>
       </div>
 
+      <div class="input-group mb-2">
+        <span class="input-group-addon">
+          <span class="fa fa-search"></span>
+        </span>
+        <input type="text" class="form-control" placeholder="Search clusters"
+          ng-model="$ctrl.searchTerm" ng-model-options="{ debounce: 400 }">
+      </div>
+
       <!-- group -->
-      <div ng-repeat="group in $ctrl.clusterGroups">
+      <div ng-repeat="group in $ctrl.clusterGroups" class="mb-4">
         <!-- group title -->
-        <div class="row" ng-if="::group.title">
+        <div class="row" ng-if="group.title && group.filteredClusters.length > 0">
           <div class="col-md-12">
-            <h5 style="margin-bottom:.1rem;">{{::group.title}}</h5>
+            <h5 class="mb-1">{{::group.title}}</h5>
             <p class="lead" style="margin-bottom:.1rem;font-size:1rem;">
               {{::group.description}}
             </p>
           </div>
         </div> <!-- /group title -->
         <!-- clusters -->
-        <div class="row" ng-if="::group.clusters.length">
-          <div class="col-md-12">
-            <div ng-repeat="cluster in group.clusters">
-              <a ng-href="{{::cluster.href}}">{{::cluster.title}}</a>
-              <span ng-if="::(!cluster.multiviewer && !cluster.offline)">
-                <span>{{cluster.deltaBPS}} Bytes/Sec</span> |
-                <span>{{cluster.deltaTDPS}} Packet Drops/Sec</span>
-              </span>
-              <div ng-if="::cluster.description" class="small">
-                {{::cluster.description}}
-              </div>
+        <ul class="list-group" class="row">
+          <li ng-repeat="cluster in group.filteredClusters = (group.clusters | filter:$ctrl.searchTerm) track by $index"
+            class="list-group-item list-group-item-action flex-column align-items-start"
+            ng-class="{'list-group-item-light':cluster.offline}">
+            <div class="d-flex w-100 justify-content-between">
+              <h5 class="mb-1">
+                <a ng-if="!cluster.offline"
+                  class="no-decoration" ng-href="{{::cluster.href}}/sessions">
+                  {{::cluster.title}}
+                </a>
+                <span ng-if="cluster.offline">{{::cluster.title}}</span>
+                <small class="text-muted" ng-if="cluster.multiviewer">
+                  (multiviewer)
+                </small>
+                <small class="text-muted" ng-if="cluster.offline">
+                  (offline)
+                </small>
+              </h5>
+              <small ng-if="!cluster.offline">
+                {{cluster.deltaBPS || 0}} Bytes/Sec
+                &nbsp;|&nbsp;
+                {{cluster.deltaTDPS || 0}} Packet Drops/Sec
+                &nbsp;|&nbsp;
+                <a ng-href="{{::cluster.href}}/stats" class="no-decoration"
+                  data-toggle="tooltip" data-placement="right" title="Go to the Stats page">
+                  view stats
+                </a>
+              </small>
             </div>
-          </div>
-        </div> <!-- /clusters -->
+            <span class="badge badge-pill badge-secondary cursor-help pull-right"
+              ng-class="{'badge-success':cluster.status === 'green','badge-warning':cluster.status === 'yellow','badge-danger':cluster.status === 'red'}"
+              data-toggle="tooltip" data-placement="left" title="Moloch ES Status">
+              {{cluster.status || 'unknown'}}
+            </span>
+            <p class="text-muted small mb-1">{{::cluster.description}}</p>
+
+          </li>
+        </ul> <!-- /clusters -->
       </div> <!-- /group -->
 
     </div>
@@ -72,6 +104,7 @@
     <!-- Bootstrap JS -->
     <script src="node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
 
+    <script src="clusters.js"></script>
     <script src="clusterboard.js"></script>
 
   </body>
