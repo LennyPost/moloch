@@ -1,130 +1,34 @@
-// define clusters and their grouping
+// define clusters within groups
 let clusterGroups = [
   {
+    "title": "Cluster Group 1",
+    "description": "This is the description of the cluster group. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
     "clusters": [
       {
-        "title": "daha",
-        "href": "daha"
+        "title": "Cluster 1",
+        "description": "This is a cluster description",
+        "url": "real/url/here"
       },
       {
-        "title": "egress",
-        "href": "egress"
-      },
-      {
-        "title": "all",
-        "description": "Both daha and egress",
-        "href": "daha",
+        "title": "Multiviewer",
+        "description": "This is a multiviewer cluster!",
+        "url": "multiviewer/url/here",
         "multiviewer": true
       },
       {
-        "title": "black",
-        "href": "black"
-      },
-      {
-        "title": "inv",
-        "description": "investigate",
-        "href": "inv"
+        "title": "Disabled Cluster",
+        "description": "This is a disabled cluster",
+        "url": "disabled/url/here",
+        "disabled": true
       }
     ]
   },
   {
-    "title": "Production",
-    "description": "Most production sites are not recording icmp, port 443 or port 80",
+    "title": "Cluster Group 2",
     "clusters": [
       {
-        "title": "atc",
-        "href": "atcprod"
-      },
-      {
-        "title": "amt",
-        "href": "amtprod"
-      },
-      {
-        "title": "frr",
-        "href": "frrprod"
-      },
-      {
-        "title": "lcd",
-        "href": "lcdprod"
-      },
-      {
-        "title": "mtc",
-        "href": "mtcprod"
-      },
-      {
-        "title": "scd",
-        "href": "scdprod"
-      },
-      {
-        "title": "all",
-        "description": "all production molochs, please be gentle",
-        "href": "allprod",
-        "multiviewer": true
-      }
-    ]
-  },
-  {
-    "title": "DASS",
-    "description": "AOL to VZW, Studios to AWS, AWS private subnets to internet, Public DNS",
-    "clusters": [
-      {
-        "title": "ash",
-        "href": "ashdass"
-      },
-      {
-        "title": "scd",
-        "href": "scddass",
-        "offline": true
-      },
-      {
-        "title": "frr",
-        "href": "frrdass",
-        "offline": true
-      },
-      {
-        "title": "all",
-        "description": "all dass molochs, please be gentle",
-        "href": "alldass",
-        "multiviewer": true
-      }
-    ]
-  },
-  {
-    "title": "Sniffernet",
-    "clusters": [
-      {
-        "title": "mtc",
-        "href": "mtcsniffernet"
-      },
-      {
-        "title": "scd",
-        "href": "scdsniffernet",
-        "offline": true
-      },
-      {
-        "title": "atc",
-        "href": "atcsniffernet",
-        "offline": true
-      },
-      {
-        "title": "lcd",
-        "href": "lcdsniffernet",
-        "offline": true
-      },
-      {
-        "title": "all",
-        "description": "all sniffernet molochs, please be gentle",
-        "href": "allsniffernet",
-        "multiviewer": true
-      }
-    ]
-  },
-  {
-    "title": "Test",
-    "clusters": [
-      {
-        "title": "dmh",
-        "href": "dmh"
+        "title": "Another Cluster",
+        "url": "real/url/here"
       }
     ]
   }
