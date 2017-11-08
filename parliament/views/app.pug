@@ -1,0 +1,16 @@
+doctype html
+html(ng-app="parliament", lang="en")
+
+  head
+    base(href="/")
+    title Molochs
+    meta(charset="utf8")
+    meta(name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no")
+    meta(http-equiv="x-ua-compatible" content="ie=edge")
+    link(rel="stylesheet", href="font-awesome/css/font-awesome.min.css")
+
+  body
+    div(ng-view)
+
+    script(src='vendor.bundle.js')
+    script(src='app.bundle.js')
