@@ -6,7 +6,8 @@ const http    = require('http');
 const https   = require('https');
 const fs      = require('fs');
 const favicon = require('serve-favicon');
-const axios   = require('axios');
+const request = require('request');
+const rp      = require('request-promise');
 
 const app     = express();
 
@@ -30,29 +31,53 @@ app.use('/vendor.bundle.js', function(req, res) {
 
 
 function getHealth(cluster) {
-  axios.get(`${cluster.url}/eshealth.json`)
+  return new Promise((resolve, reject) => {
+
+  console.log('get health!');
+
+  let options = {
+    url: `${cluster.url}/eshealth.json`,
+    method: 'GET',
+    rejectUnauthorized: false
+  };
+
+  rp(options)
     .then((response) => {
-      // TODO append health to cluster
-      console.log('health success', response);
+      console.log('HEALTH SUCCESS', response);
+      resolve(response);
     })
     .catch((error) => {
-      // TODO append error to cluster
-      console.log('error with health request:', error.message);
+      console.log('HEALTH ERROR:', error); // TODO show error on cluster
+      reject(error);
     });
+
+  });
+
 }
 
 function getStats(cluster) {
-  axios.get(`${cluster.url}/stats.json`)
+  return new Promise((resolve, reject) => {
+
+  console.log('get stats!');
+
+  let options = {
+    url: `${cluster.url}/stats.json`,
+    method: 'GET',
+    rejectUnauthorized: false
+  };
+
+  rp(options)
     .then((response) => {
-      // TODO append stats to cluster
-      console.log('stats success', response);
+      console.log('STATS SUCCESS', response);
+      resolve(response);
     })
     .catch((error) => {
-      // TODO append error to cluster
-      console.log('error with stats request:', error.message);
-    })
-}
+      console.log('STATS ERROR:', error); // TODO show error on cluster
+      reject(error);
+    });
 
+  });
+}
 
 // APIs
 app.get('/parliament.json', function(req, res) {
@@ -61,17 +86,25 @@ app.get('/parliament.json', function(req, res) {
       for (let cluster of group.clusters) {
         // only get health for online clusters
         if (!cluster.disabled) {
-          // TODO - fetch health and append data to cluster
-          getHealth(cluster);
+          // TODO - create chain of promises
+          getHealth(cluster)
+            .then((response) => {
+               let health = JSON.parse(response);
+               cluster.status = health.status;
+               res.send(JSON.stringify(parliament));
+            })
+            .catch((error) => {
+              // TODO
+            });
         }
         if (!cluster.multiviewer && !cluster.disabled) {
           // TODO - fetch stats and append data to cluster
-          getStats(cluster);
+          //getStats(cluster);
         }
       }
     }
   }
-  res.send(JSON.stringify(parliament));
+  //res.send(JSON.stringify(parliament));
 });
 
 
