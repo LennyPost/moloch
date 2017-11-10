@@ -30,25 +30,36 @@ app.use('/vendor.bundle.js', function(req, res) {
 });
 
 
+// Helper functions
 function getHealth(cluster) {
   return new Promise((resolve, reject) => {
 
-  console.log('get health!');
-
   let options = {
-    url: `${cluster.url}/eshealth.json`,
+    url: `${cluster.localUrl || cluster.url}/eshealth.json`,
     method: 'GET',
     rejectUnauthorized: false
   };
 
   rp(options)
     .then((response) => {
-      console.log('HEALTH SUCCESS', response);
-      resolve(response);
+      cluster.healthError = undefined;
+
+      let health;
+      try { health = JSON.parse(response); }
+      catch (e) {
+        cluster.healthError = 'ES health parse failure';
+        console.error('Bad response for es health', cluster.localUrl || cluster.url);
+        return resolve();
+      }
+
+      if (health) { cluster.status = health.status; }
+
+      return resolve();
     })
     .catch((error) => {
-      console.log('HEALTH ERROR:', error); // TODO show error on cluster
-      reject(error);
+      console.log('HEALTH ERROR:', error);
+      cluster.healthError = error;
+      return resolve();
     });
 
   });
@@ -58,53 +69,85 @@ function getHealth(cluster) {
 function getStats(cluster) {
   return new Promise((resolve, reject) => {
 
-  console.log('get stats!');
-
   let options = {
-    url: `${cluster.url}/stats.json`,
+    url: `${cluster.localUrl || cluster.url}/stats.json`,
     method: 'GET',
     rejectUnauthorized: false
   };
 
   rp(options)
     .then((response) => {
-      console.log('STATS SUCCESS', response);
-      resolve(response);
+      cluster.statsError = undefined;
+
+      if (response.bsqErr) {
+        cluster.statsError = response.bsqErr;
+        console.error('Get stats error', response.bsqErr);
+        return resolve();
+      }
+
+      let stats;
+      try { stats = JSON.parse(response); }
+      catch (e) {
+        cluster.statsError = 'ES stats parse failure';
+        console.error('Bad response for stats', cluster.localUrl || cluster.url);
+        return resolve();
+      }
+
+      if (!stats || !stats.data) { return resolve(); }
+
+      cluster.deltaBPS = 0;
+      // sum delta bytes per second
+      for (let stat of stats.data) {
+        if (stat.deltaBytesPerSec) {
+          cluster.deltaBPS += stat.deltaBytesPerSec;
+        }
+      }
+
+      cluster.deltaTDPS = 0;
+      for (let stat of stats.data) {
+        if (stat.deltaTotalDroppedPerSec) {
+          cluster.deltaTDPS += stat.deltaTotalDroppedPerSec;
+        }
+      }
+
+      return resolve();
     })
     .catch((error) => {
-      console.log('STATS ERROR:', error); // TODO show error on cluster
-      reject(error);
+      console.log('STATS ERROR:', error);
+      cluster.statsError = error;
+      return resolve();
     });
 
   });
 }
 
+
 // APIs
 app.get('/parliament.json', function(req, res) {
+  let promises = [];
   for (let group of parliament) {
     if (group.clusters) {
       for (let cluster of group.clusters) {
         // only get health for online clusters
         if (!cluster.disabled) {
-          // TODO - create chain of promises
-          getHealth(cluster)
-            .then((response) => {
-               let health = JSON.parse(response);
-               cluster.status = health.status;
-               res.send(JSON.stringify(parliament));
-            })
-            .catch((error) => {
-              // TODO
-            });
+          promises.push(getHealth(cluster));
         }
+        // don't get stats for multiviewers of offline clusters
         if (!cluster.multiviewer && !cluster.disabled) {
-          // TODO - fetch stats and append data to cluster
-          //getStats(cluster);
+          promises.push(getStats(cluster));
         }
       }
     }
   }
-  //res.send(JSON.stringify(parliament));
+
+  Promise.all(promises)
+    .then(() => {
+      res.send(JSON.stringify(parliament));
+    })
+    .catch((error) => {
+      console.error('ALL PROMISES ERROR', error);
+      res.send(JSON.stringify(parliament));
+    });
 });
 
 

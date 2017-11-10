@@ -17,7 +17,6 @@
       {
         "title": "Disabled Cluster",
         "description": "This is a disabled cluster",
-        "url": "disabled/url/here",
         "disabled": true
       }
     ]
