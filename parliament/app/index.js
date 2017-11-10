@@ -26,11 +26,14 @@
 
     /* Callback when component is mounted and ready */
     $onInit() { // initialize scope variables
-      this.autoRefresh = true; // TODO: save this?
+      this.refreshInterval = '15000';  // TODO: save this
 
       this.loadData();
 
-      if (this.autoRefresh) { this.startAutoRefresh(); }
+      if (this.refreshInterval) { this.startAutoRefresh(); }
+
+      // setup tooltips after parliament renders
+      this.$timeout(() => { $('[data-toggle="tooltip"]').tooltip(); });
     }
 
 
@@ -47,8 +50,8 @@
 
     startAutoRefresh() {
       interval = this.$interval(() => {
-        if (this.autoRefresh) { this.loadData(); }
-      }, 10000);
+        if (this.refreshInterval) { this.loadData(); }
+      }, this.refreshInterval);
     }
 
     stopAutoRefresh() {
@@ -57,10 +60,8 @@
 
 
     /* page functions ------------------------------------------------------ */
-    toggleAutoRefresh() {
-      this.autoRefresh = !this.autoRefresh;
-
-      if (this.autoRefresh) {
+    changeRefreshInterval() {
+      if (this.refreshInterval) {
         this.loadData();
         this.startAutoRefresh();
       } else {

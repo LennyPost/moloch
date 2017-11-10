@@ -7,3 +7,6 @@
 .help-cursor    { cursor: help; }
 
 .no-decoration  { text-decoration: none !important; }
+
+/* refresh interval select box */
+.refresh-interval-control { -webkit-appearance: none; }

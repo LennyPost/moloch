@@ -3,6 +3,7 @@
   'use strict';
 
 
+  require('../node_modules/bootstrap/js/dist/tooltip');
   require('../node_modules/bootstrap/dist/css/bootstrap.css');
   require('./app.css');
   require('angular-route');
