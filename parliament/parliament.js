@@ -12,6 +12,7 @@ const rp      = require('request-promise');
 const app     = express();
 
 let parliament = require(`${__dirname}/parliament.json`);
+let timeout;
 
 
 app.use(favicon(__dirname + '/public/favicon.ico'));
@@ -30,7 +31,36 @@ app.use('/vendor.bundle.js', function(req, res) {
 });
 
 
-// Helper functions
+/* Helper functions -------------------------------------------------------- */
+function updateParliament() {
+  timeout = setInterval(() => {
+    let promises = [];
+    for (let group of parliament) {
+      if (group.clusters) {
+        for (let cluster of group.clusters) {
+          // only get health for online clusters
+          if (!cluster.disabled) {
+            promises.push(getHealth(cluster));
+          }
+          // don't get stats for multiviewers of offline clusters
+          if (!cluster.multiviewer && !cluster.disabled) {
+            promises.push(getStats(cluster));
+          }
+        }
+      }
+    }
+
+    Promise.all(promises)
+      .then(() => {
+        return;
+      })
+      .catch((error) => {
+        console.error('Parliament update error:', error.messge || error);
+        return;
+      });
+  }, 10000);
+}
+
 function getHealth(cluster) {
   return new Promise((resolve, reject) => {
 
@@ -57,8 +87,9 @@ function getHealth(cluster) {
       return resolve();
     })
     .catch((error) => {
-      console.log('HEALTH ERROR:', error);
-      cluster.healthError = error;
+      let message = error.message || error;
+      console.error('HEALTH ERROR:', message);
+      cluster.healthError = message;
       return resolve();
     });
 
@@ -104,6 +135,7 @@ function getStats(cluster) {
       }
 
       cluster.deltaTDPS = 0;
+      // sum delta total dropped per second
       for (let stat of stats.data) {
         if (stat.deltaTotalDroppedPerSec) {
           cluster.deltaTDPS += stat.deltaTotalDroppedPerSec;
@@ -113,8 +145,9 @@ function getStats(cluster) {
       return resolve();
     })
     .catch((error) => {
-      console.log('STATS ERROR:', error);
-      cluster.statsError = error;
+      let message = error.message || error;
+      console.error('STATS ERROR:', message);
+      cluster.statsError = message;
       return resolve();
     });
 
@@ -122,32 +155,10 @@ function getStats(cluster) {
 }
 
 
-// APIs
+/* APIs -------------------------------------------------------------------- */
 app.get('/parliament.json', function(req, res) {
-  let promises = [];
-  for (let group of parliament) {
-    if (group.clusters) {
-      for (let cluster of group.clusters) {
-        // only get health for online clusters
-        if (!cluster.disabled) {
-          promises.push(getHealth(cluster));
-        }
-        // don't get stats for multiviewers of offline clusters
-        if (!cluster.multiviewer && !cluster.disabled) {
-          promises.push(getStats(cluster));
-        }
-      }
-    }
-  }
-
-  Promise.all(promises)
-    .then(() => {
-      res.send(JSON.stringify(parliament));
-    })
-    .catch((error) => {
-      console.error('ALL PROMISES ERROR', error);
-      res.send(JSON.stringify(parliament));
-    });
+  if (!parliament) { return res.status(500).send('Unable to get parliament'); }
+  return res.send(JSON.stringify(parliament));
 });
 
 
@@ -157,10 +168,11 @@ app.use(function(req, res) {
 });
 
 
-/* LISTEN! */
+/* LISTEN! ----------------------------------------------------------------- */
 var server = app.listen(8008, function () {
   var host = server.address().address;
   var port = server.address().port;
 
   console.log('App listening at http://%s:%s', host, port);
+  updateParliament();
 });

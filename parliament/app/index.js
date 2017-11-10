@@ -40,7 +40,8 @@
         .then((response) => {
           this.parliament = response.data;
         }, (error) => {
-          this.error = error; // TODO - display error
+          this.error = error.statusText ||
+            'Error fetching health and status information about Molochs in your parliament. The information displayed below is likely out of date';
         });
     }
 

@@ -9,10 +9,15 @@
           data-placement="bottom" title="Toggle auto refresh">
           <span class="fa fa-refresh"></span>
         </a>
-        <img src="/public/header_logo.png" style="vertical-align:bottom;"> Moloch
+        <img src="/public/header_logo.png" style="vertical-align:bottom;"> Moloch Parliament
       </h1>
       <p class="lead">Do not taunt the Happy Moloch. Please use the Happy Moloch responsibly.</p>
     </div>
+  </div>
+
+  <div class="alert alert-danger" ng-if="$ctrl.error">
+    <span class="fa fa-exclamation-triangle"></span>&nbsp;
+    {{::$ctrl.error}}
   </div>
 
   <div class="input-group">

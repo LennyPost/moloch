@@ -21,7 +21,7 @@
   .config(['$routeProvider','$locationProvider','$httpProvider',
     function($routeProvider, $locationProvider, $httpProvider) {
       $routeProvider
-        .when('/parliament', {
+        .when('/', {
           title    : 'Parliament',
           template : '<moloch-parliament></moloch-parliament>',
         })
@@ -54,6 +54,5 @@
 
   require('./app.js');
   require('./index.js');
-
 
 })();
