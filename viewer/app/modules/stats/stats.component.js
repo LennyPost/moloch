@@ -40,6 +40,10 @@
 
       this.currentPage = 1; // always start on first page
 
+      this.UserService.getSettings()
+        .then((response) => { this.settings = response; })
+        .catch((error)   => { this.settings = { timezone:'local' }; });
+
       this.query = {
         length    : this.$routeParams.length || 50,
         start     : 0,
@@ -61,10 +65,6 @@
       if (this.$routeParams.statsTab) {
         this.selectedTab = parseInt(this.$routeParams.statsTab) || 0;
       }
-
-      this.UserService.getSettings()
-        .then((response) => { this.settings = response; })
-        .catch((error)   => { this.settings = { timezone:'local' }; });
 
       // build colors array from css variables
       let styles = window.getComputedStyle(document.body);

@@ -87,7 +87,8 @@
   <div class="container-fluid">
 
     <span class="fa fa-lg fa-question-circle-o pull-right margined-top-lg cursor-help"
-      uib-tooltip="HINT: These graphs are 1440 pixels wide. Expand your browser window to at least 1500 pixels wide for best viewing."
+      ng-if="$ctrl.selectedTab === 0"
+      uib-tooltip="HINT: This graph is 1440 pixels wide. Expand your browser window to at least 1500 pixels wide for best viewing."
       tooltip-placement="left"></span>
 
     <uib-tabset ng-if="!$ctrl.error" active="$ctrl.selectedTab">
@@ -233,11 +234,27 @@
 
       </uib-tab>
 
-      <uib-tab index="1" heading="Elasticsearch" select="$ctrl.selectTab(1)">
+      <uib-tab index="1" heading="ES Stats" select="$ctrl.selectTab(1)">
 
         <moloch-es-stats ng-if="$ctrl.selectedTab === 1"
           update-interval="$ctrl.dataInterval">
         </moloch-es-stats>
+
+      </uib-tab>
+
+      <uib-tab index="2" heading="ES Indices" select="$ctrl.selectTab(2)" has-permission="createEnabled">
+
+        <moloch-es-indices ng-if="$ctrl.selectedTab === 2"
+          has-permission="createEnabled" update-interval="$ctrl.dataInterval">
+        </moloch-es-indices>
+
+      </uib-tab>
+
+      <uib-tab index="3" heading="ES Tasks" select="$ctrl.selectTab(3)" has-permission="createEnabled">
+
+        <moloch-es-tasks ng-if="$ctrl.selectedTab === 3"
+          has-permission="createEnabled" update-interval="$ctrl.dataInterval">
+        </moloch-es-tasks>
 
       </uib-tab>
 
