@@ -52,7 +52,7 @@
     <hr>
 
     <!-- group -->
-    <div ng-repeat="group in $ctrl.parliament" class="mb-4">
+    <div ng-repeat="group in $ctrl.parliament track by $index" class="mb-4">
 
       <!-- group title -->
       <div class="row" ng-if="group.title && group.filteredClusters.length > 0">
@@ -66,7 +66,7 @@
 
       <!-- clusters -->
       <!-- compact style -->
-      <ul class="cluster-group d-flex flex-wrap row" ng-if="$ctrl.compactMode">
+      <ul class="cluster-group d-flex flex-wrap row mb-4" ng-if="$ctrl.compactMode">
         <li ng-repeat="cluster in group.filteredClusters = (group.clusters | filter:{title:$ctrl.searchTerm}) track by $index"
           class="col-sm-12 col-md-6 col-lg-4 col-xl-3 mb-2">
           <div class="card bg-light">
@@ -94,10 +94,8 @@
                   <span ng-if="!cluster.status && !cluster.healthError">????</span>
                 </span>
               </div>
-              <span ng-if="cluster.description">
-                <hr>
-                <p class="text-muted small mb-2">{{::cluster.description}}</p>
-              </span>
+              <hr>
+              <p class="text-muted small mb-2">{{::cluster.description}}</p>
               <small ng-if="!cluster.disabled" style="align-self:flex-end;">
                 <div ng-if="!cluster.multiviewer && !cluster.statsError">
                   <strong>{{cluster.deltaBPS || 0 | commaString}}</strong>
