@@ -1,109 +1,179 @@
-<div class="container">
+<div class="container-fluid">
+  <div class="mr-3 ml-3">
 
-  <div class="row mt-4">
-    <div class="col-md-12">
-      <h1>
-        <!-- refresh interval select -->
-        <span class="form-group pull-right">
-          <div class="input-group">
-            <span class="input-group-addon cursor-help"
-              data-toggle="tooltip" data-placement="left"
-              title="Refresh Interval">
-              <span class="fa fa-refresh"></span>
-            </span>
-            <select class="form-control refresh-interval-control"
-              ng-model="$ctrl.refreshInterval" tabindex="6"
-              ng-change="$ctrl.changeRefreshInterval()">
-              <option value="">Never</option>
-              <option value="15000">15 seconds</option>
-              <option value="30000">30 seconds</option>
-              <option value="45000">45 seconds</option>
-              <option value="60000">1 minute</option>
-              <option value="300000">5 minutes</option>
-            </select>
-          </div>
-        </span> <!-- /refresh interval select -->
-        <img src="/public/header_logo.png" style="vertical-align:bottom;"> Moloch Parliament
-      </h1>
-      <p class="lead">Do not taunt the Happy Moloch. Please use the Happy Moloch responsibly.</p>
-    </div>
-  </div>
-
-  <div class="alert alert-danger" ng-if="$ctrl.error">
-    <span class="fa fa-exclamation-triangle"></span>&nbsp;
-    {{::$ctrl.error}}
-  </div>
-
-  <div class="input-group">
-    <span class="input-group-addon">
-      <span class="fa fa-search"></span>
-    </span>
-    <input type="text" class="form-control" placeholder="Search clusters"
-      ng-model="$ctrl.searchTerm" ng-model-options="{ debounce: 400 }">
-  </div>
-
-  <hr>
-
-  <!-- group -->
-  <div ng-repeat="group in $ctrl.parliament" class="mb-4">
-    <!-- group title -->
-    <div class="row" ng-if="group.title && group.filteredClusters.length > 0">
+    <div class="row mt-4">
       <div class="col-md-12">
-        <h5 class="mb-1">{{::group.title}}</h5>
-        <p class="lead" style="margin-bottom:.1rem;font-size:1rem;">
-          {{::group.description}}
-        </p>
+        <h1>
+          <!-- refresh interval select -->
+          <span class="form-group pull-right">
+            <div class="input-group">
+              <span class="input-group-addon cursor-help"
+                data-toggle="tooltip" data-placement="left"
+                title="Refresh Interval">
+                <span class="fa fa-refresh"></span>
+              </span>
+              <select class="form-control refresh-interval-control"
+                ng-model="$ctrl.refreshInterval" tabindex="6"
+                ng-change="$ctrl.changeRefreshInterval()">
+                <option value="">Never</option>
+                <option value="15000">15 seconds</option>
+                <option value="30000">30 seconds</option>
+                <option value="45000">45 seconds</option>
+                <option value="60000">1 minute</option>
+                <option value="300000">5 minutes</option>
+              </select>
+            </div>
+          </span> <!-- /refresh interval select -->
+          <!-- compact mode button -->
+          <a class="btn btn-outline-info pull-right cursor-pointer mr-2"
+            ng-click="$ctrl.compactMode = !$ctrl.compactMode">
+            <span ng-if="!$ctrl.compactMode" class="fa fa-compress"></span>
+            <span ng-if="$ctrl.compactMode" class="fa fa-expand"></span>
+          </a><!-- /compact mode button -->
+          <img src="/public/header_logo.png" style="vertical-align:bottom;"> Moloch Parliament
+        </h1>
+        <p class="lead">Do not taunt the Happy Moloch. Please use the Happy Moloch responsibly.</p>
       </div>
-    </div> <!-- /group title -->
-    <!-- clusters -->
-    <ul class="list-group" class="row">
-      <li ng-repeat="cluster in group.filteredClusters = (group.clusters | filter:{title:$ctrl.searchTerm}) track by $index"
-        class="list-group-item list-group-item-action flex-column align-items-start"
-        ng-class="{'list-group-item-light':cluster.disabled}">
-        <div class="d-flex w-100 justify-content-between">
-          <h5 class="mb-1">
-            <a ng-if="!cluster.disabled"
-              class="no-decoration" ng-href="{{::cluster.url}}/sessions">
-              {{::cluster.title}}
-            </a>
-            <span ng-if="cluster.disabled">{{::cluster.title}}</span>
-            <small class="text-muted" ng-if="cluster.multiviewer">
-              (multiviewer)
-            </small>
-            <small class="text-muted" ng-if="cluster.disabled">
-              (disabled)
-            </small>
-          </h5>
-          <small ng-if="!cluster.disabled">
-            <span ng-if="!cluster.multiviewer && !cluster.statsError">
-              <strong>{{cluster.deltaBPS || 0 | commaString}}</strong>
-              Bytes/Sec
-              &nbsp;|&nbsp;
-              <strong>{{cluster.deltaTDPS || 0 | commaString}}</strong>
-              Packet Drops/Sec
-              &nbsp;|&nbsp;
-            </span>
-            <span ng-if="!cluster.multiviewer && cluster.statsError">
-              <span class="fa fa-exclamation-triangle text-danger"></span>&nbsp;
-              <em class="text-danger">{{cluster.statsError}}</em>
-              &nbsp;|&nbsp;
-            </span>
-            <a ng-href="{{::cluster.url}}/stats" class="no-decoration"
-              data-toggle="tooltip" data-placement="top"
-              title="Go to the Stats page">
-              view stats
-            </a>
-          </small>
-        </div>
-        <span ng-if="!cluster.disabled"
-          class="badge badge-pill badge-secondary cursor-help pull-right"
-          ng-class="{'badge-success':cluster.status === 'green','badge-warning':cluster.status === 'yellow','badge-danger':cluster.status === 'red'}"
-          data-toggle="tooltip" data-placement="left" title="Moloch ES Status">
-          {{cluster.status || cluster.healthError || '????'}}
-        </span>
-        <p class="text-muted small mb-1">{{::cluster.description}}</p>
-      </li>
-    </ul> <!-- /clusters -->
-  </div> <!-- /group -->
+    </div>
 
+    <div class="alert alert-danger" ng-if="$ctrl.error">
+      <span class="fa fa-exclamation-triangle"></span>&nbsp;
+      {{::$ctrl.error}}
+    </div>
+
+    <div class="input-group">
+      <span class="input-group-addon">
+        <span class="fa fa-search"></span>
+      </span>
+      <input type="text" class="form-control" placeholder="Search clusters"
+        ng-model="$ctrl.searchTerm" ng-model-options="{ debounce: 400 }">
+    </div>
+
+    <hr>
+
+    <!-- group -->
+    <div ng-repeat="group in $ctrl.parliament" class="mb-4">
+
+      <!-- group title -->
+      <div class="row" ng-if="group.title && group.filteredClusters.length > 0">
+        <div class="col-md-12">
+          <h5 class="mb-1">{{::group.title}}</h5>
+          <p class="lead mb-2" style="font-size:1rem;">
+            {{::group.description}}
+          </p>
+        </div>
+      </div> <!-- /group title -->
+
+      <!-- clusters -->
+      <!-- compact style -->
+      <ul class="cluster-group d-flex flex-wrap row" ng-if="$ctrl.compactMode">
+        <li ng-repeat="cluster in group.filteredClusters = (group.clusters | filter:{title:$ctrl.searchTerm}) track by $index"
+          class="col-sm-12 col-md-6 col-lg-4 col-xl-3 mb-2">
+          <div class="card bg-light">
+            <div class="card-body">
+              <div>
+                <h5 class="mb-1" style="display:inline-block">
+                  <a ng-if="!cluster.disabled"
+                    class="no-decoration" ng-href="{{::cluster.url}}/sessions">
+                    {{::cluster.title}}
+                  </a>
+                  <span ng-if="cluster.disabled">{{::cluster.title}}</span>
+                  <small class="text-muted" ng-if="cluster.multiviewer">
+                    (multiviewer)
+                  </small>
+                  <small class="text-muted" ng-if="cluster.disabled">
+                    (disabled)
+                  </small>
+                </h5>
+                <span ng-if="!cluster.disabled" style="display:inline-table;"
+                  class="badge badge-pill badge-secondary cursor-help pull-right"
+                  ng-class="{'badge-success':cluster.status === 'green','badge-warning':cluster.status === 'yellow','badge-danger':cluster.status === 'red'}"
+                  data-toggle="tooltip" data-placement="left" title="Moloch ES Status {{cluster.healthError}}">
+                  <span ng-if="cluster.status">{{cluster.status}}</span>
+                  <span ng-if="cluster.healthError" class="fa fa-exclamation-triangle"></span>
+                  <span ng-if="!cluster.status && !cluster.healthError">????</span>
+                </span>
+              </div>
+              <span ng-if="cluster.description">
+                <hr>
+                <p class="text-muted small mb-2">{{::cluster.description}}</p>
+              </span>
+              <small ng-if="!cluster.disabled" style="align-self:flex-end;">
+                <div ng-if="!cluster.multiviewer && !cluster.statsError">
+                  <strong>{{cluster.deltaBPS || 0 | commaString}}</strong>
+                  Bytes/Sec<br>
+                  <strong>{{cluster.deltaTDPS || 0 | commaString}}</strong>
+                  Packet Drops/Sec
+                </div>
+              </small>
+            </div>
+            <div class="card-footer small">
+              <span ng-if="!cluster.multiviewer && cluster.statsError"
+                data-toggle="tooltip" data-placement="top" title="{{::cluster.statsError}}">
+                <span class="fa fa-exclamation-triangle text-danger"></span>&nbsp;
+                <em class="text-danger"></em>
+              </span>
+              <a ng-href="{{::cluster.url}}/stats" class="no-decoration"
+                data-toggle="tooltip" data-placement="top"
+                title="Go to the Stats page">
+                view stats
+              </a>
+            </div>
+          </div>
+        </li>
+      </ul> <!-- /compact style -->
+      <!-- expanded style -->
+      <ul class="list-group" class="row" ng-if="!$ctrl.compactMode">
+        <li ng-repeat="cluster in group.filteredClusters = (group.clusters | filter:{title:$ctrl.searchTerm}) track by $index"
+          class="list-group-item list-group-item-action flex-column align-items-start"
+          ng-class="{'list-group-item-light':cluster.disabled}">
+          <div class="d-flex w-100 justify-content-between">
+            <h5 class="mb-1">
+              <a ng-if="!cluster.disabled"
+                class="no-decoration" ng-href="{{::cluster.url}}/sessions">
+                {{::cluster.title}}
+              </a>
+              <span ng-if="cluster.disabled">{{::cluster.title}}</span>
+              <small class="text-muted" ng-if="cluster.multiviewer">
+                (multiviewer)
+              </small>
+              <small class="text-muted" ng-if="cluster.disabled">
+                (disabled)
+              </small>
+            </h5>
+            <small ng-if="!cluster.disabled">
+              <span ng-if="!cluster.multiviewer && !cluster.statsError">
+                <strong>{{cluster.deltaBPS || 0 | commaString}}</strong>
+                Bytes/Sec
+                &nbsp;|&nbsp;
+                <strong>{{cluster.deltaTDPS || 0 | commaString}}</strong>
+                Packet Drops/Sec
+                &nbsp;|&nbsp;
+              </span>
+              <span ng-if="!cluster.multiviewer && cluster.statsError">
+                <span class="fa fa-exclamation-triangle text-danger"></span>&nbsp;
+                <em class="text-danger">{{cluster.statsError}}</em>
+                &nbsp;|&nbsp;
+              </span>
+              <a ng-href="{{::cluster.url}}/stats" class="no-decoration"
+                data-toggle="tooltip" data-placement="top"
+                title="Go to the Stats page">
+                view stats
+              </a>
+            </small>
+          </div>
+          <span ng-if="!cluster.disabled"
+            class="badge badge-pill badge-secondary cursor-help pull-right"
+            ng-class="{'badge-success':cluster.status === 'green','badge-warning':cluster.status === 'yellow','badge-danger':cluster.status === 'red'}"
+            data-toggle="tooltip" data-placement="left" title="Moloch ES Status">
+            {{cluster.status || cluster.healthError || '????'}}
+          </span>
+          <p class="text-muted small mb-1">{{::cluster.description}}</p>
+        </li>
+      </ul> <!-- /expanded style -->
+      <!-- /clusters -->
+
+    </div> <!-- /group -->
+
+  </div>
 </div>

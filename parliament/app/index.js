@@ -26,7 +26,8 @@
 
     /* Callback when component is mounted and ready */
     $onInit() { // initialize scope variables
-      this.refreshInterval = '15000';  // TODO: save this
+      this.refreshInterval  = '15000';  // TODO: save this
+      this.compactMode      = false;    // TODO: save this
 
       this.loadData();
 
