@@ -179,8 +179,6 @@ app.post('/groups', function(req, res) {
 
   let json = JSON.stringify(parliament);
 
-  console.log(json);
-
   fs.writeFile('parliament.json', json, 'utf8', () => {
     parliamentWithData = JSON.parse(JSON.stringify(parliament)); // TODO - this is hacky
     updateParliament()
@@ -213,8 +211,6 @@ app.delete('/groups/:groupTitle', function(req, res) {
   }
 
   let json = JSON.stringify(parliament);
-
-  console.log(json);
 
   fs.writeFile('parliament.json', json, 'utf8', () => {
     parliamentWithData = JSON.parse(JSON.stringify(parliament)); // TODO - this is hacky
@@ -250,8 +246,6 @@ app.put('/groups/:groupTitle', function(req, res) {
   }
 
   let json = JSON.stringify(parliament);
-
-  console.log(json);
 
   fs.writeFile('parliament.json', json, 'utf8', () => {
     parliamentWithData = JSON.parse(JSON.stringify(parliament)); // TODO - this is hacky
@@ -295,13 +289,11 @@ app.post('/groups/:groupTitle/clusters', function(req, res) {
 
   let json = JSON.stringify(parliament);
 
-  console.log(json);
-
   fs.writeFile('parliament.json', json, 'utf8', () => {
     parliamentWithData = JSON.parse(JSON.stringify(parliament)); // TODO - this is hacky
     updateParliament()
       .then(() => {
-        return res.send('success');
+        return res.send(JSON.stringify(parliamentWithData));
       })
       .catch((error) => {
         return res.status(500).send('Unable to update parliament with your new cluster');
@@ -333,8 +325,6 @@ app.delete('/groups/:groupTitle/clusters/:clusterTitle', function(req, res) {
   }
 
   let json = JSON.stringify(parliament);
-
-  console.log(json);
 
   fs.writeFile('parliament.json', json, 'utf8', () => {
     parliamentWithData = JSON.parse(JSON.stringify(parliament)); // TODO - this is hacky
@@ -372,12 +362,10 @@ app.put('/groups/:groupTitle/clusters/:clusterTitle', function(req, res) {
   }
 
   if (!foundCluster) {
-    return res.status(500).send('Unable to find cluster to delete');
+    return res.status(500).send('Unable to find cluster to update');
   }
 
   let json = JSON.stringify(parliament);
-
-  console.log(json);
 
   fs.writeFile('parliament.json', json, 'utf8', () => {
     parliamentWithData = JSON.parse(JSON.stringify(parliament)); // TODO - this is hacky

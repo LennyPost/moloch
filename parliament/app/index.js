@@ -26,8 +26,7 @@
     /* Callback when component is mounted and ready */
     $onInit() { // initialize scope variables
       this.refreshInterval  = '15000';
-      this.compactMode      = true;
-      this.loggedIn         = true; //  TODO remove this
+      this.compactMode      = false;
 
       if (localStorage) {
         if (localStorage['refreshInterval']) {
@@ -296,6 +295,7 @@
           group.error = false;
           group.showNewClusterForm = false;
           group.clusters.push(newCluster);
+          this.updateParliament(response.data);
         }, (error) => {
           group.error = error.data || 'Unable to add a cluster to this group';
         });
@@ -383,7 +383,12 @@
         .then((response) => {
           cluster.error = false;
           cluster.showEditClusterForm = false;
-          cluster = updatedCluster;
+          cluster.title       = cluster.newTitle;
+          cluster.description = cluster.newDescription;
+          cluster.url         = cluster.newUrl;
+          cluster.localUrl    = cluster.newLocalUrl;
+          cluster.multiviewer = cluster.newMultiviewer;
+          cluster.disabled    = cluster.newDisabled;
         }, (error) => {
           cluster.error = error.data || 'Unable to update this cluster';
         });
