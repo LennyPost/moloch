@@ -8,12 +8,17 @@ const fs      = require('fs');
 const favicon = require('serve-favicon');
 const request = require('request');
 const rp      = require('request-promise');
+const bp      = require('body-parser');
 
 const app     = express();
 
 let parliament = require(`${__dirname}/parliament.json`);
+let parliamentWithData = JSON.parse(JSON.stringify(parliament)); // TODO - this is hacky
 let timeout;
 
+
+app.use(bp.json());
+app.use(bp.urlencoded({ extended: true }));
 
 app.use(favicon(__dirname + '/public/favicon.ico'));
 
@@ -33,9 +38,10 @@ app.use('/vendor.bundle.js', function(req, res) {
 
 /* Helper functions -------------------------------------------------------- */
 function updateParliament() {
-  timeout = setInterval(() => {
+  return new Promise((resolve, reject) => {
+
     let promises = [];
-    for (let group of parliament) {
+    for (let group of parliamentWithData) {
       if (group.clusters) {
         for (let cluster of group.clusters) {
           // only get health for online clusters
@@ -52,13 +58,14 @@ function updateParliament() {
 
     Promise.all(promises)
       .then(() => {
-        return;
+        return resolve();
       })
       .catch((error) => {
         console.error('Parliament update error:', error.messge || error);
-        return;
+        return resolve();
       });
-  }, 10000);
+
+  });
 }
 
 function getHealth(cluster) {
@@ -94,7 +101,6 @@ function getHealth(cluster) {
     });
 
   });
-
 }
 
 function getStats(cluster) {
@@ -157,8 +163,232 @@ function getStats(cluster) {
 
 /* APIs -------------------------------------------------------------------- */
 app.get('/parliament.json', function(req, res) {
+  if (!parliamentWithData) { return res.status(500).send('Unable to get parliament'); }
+  return res.send(JSON.stringify(parliamentWithData));
+});
+
+app.post('/groups', function(req, res) {
+  // TODO - validate inputs - require a unique name/title?
+  // TODO - make this general middleware?
   if (!parliament) { return res.status(500).send('Unable to get parliament'); }
-  return res.send(JSON.stringify(parliament));
+
+  let newGroup = { title:req.body.title, clusters:[] };
+  if (req.body.description) { newGroup.description = req.body.description; }
+
+  parliament.push(newGroup);
+
+  let json = JSON.stringify(parliament);
+
+  console.log(json);
+
+  fs.writeFile('parliament.json', json, 'utf8', () => {
+    parliamentWithData = JSON.parse(JSON.stringify(parliament)); // TODO - this is hacky
+    updateParliament()
+      .then(() => {
+        return res.send(JSON.stringify(parliamentWithData));
+      })
+      .catch((error) => {
+        return res.status(500).send('Unable to update parliament with your new group');
+      });
+  }); // TODO - error?
+});
+
+// TODO use a unique id for the group instead of the title
+app.delete('/groups/:groupTitle', function(req, res) {
+  // TODO - validate inputs - require a unique name/title?
+  if (!parliament) { return res.status(500).send('Unable to get parliament'); }
+
+  let foundGroup = false, index = 0;
+  for(let group of parliament) {
+    if (group.title === req.params.groupTitle) {
+      parliament.splice(index, 1);
+      foundGroup = true;
+      break;
+    }
+    ++index;
+  }
+
+  if (!foundGroup) {
+    return res.status(500).send('Unable to find group to delete');
+  }
+
+  let json = JSON.stringify(parliament);
+
+  console.log(json);
+
+  fs.writeFile('parliament.json', json, 'utf8', () => {
+    parliamentWithData = JSON.parse(JSON.stringify(parliament)); // TODO - this is hacky
+    updateParliament()
+      .then(() => {
+        return res.send(JSON.stringify(parliamentWithData));
+      })
+      .catch((error) => {
+        return res.status(500).send('Unable to update parliament with your new cluster');
+      });
+  }); // TODO - error?
+});
+
+// TODO use a unique id for the group instead of the title
+app.put('/groups/:groupTitle', function(req, res) {
+  // TODO - validate inputs - require a unique name/title?
+  if (!parliament) { return res.status(500).send('Unable to get parliament'); }
+
+  let foundGroup = false;
+  for(let group of parliament) {
+    if (group.title === req.params.groupTitle) {
+      group.title = req.body.title;
+      if (req.body.description) {
+        group.description = req.body.description;
+      }
+      foundGroup = true;
+      break;
+    }
+  }
+
+  if (!foundGroup) {
+    return res.status(500).send('Unable to find group to edit');
+  }
+
+  let json = JSON.stringify(parliament);
+
+  console.log(json);
+
+  fs.writeFile('parliament.json', json, 'utf8', () => {
+    parliamentWithData = JSON.parse(JSON.stringify(parliament)); // TODO - this is hacky
+    updateParliament()
+      .then(() => {
+        return res.send(JSON.stringify(parliamentWithData));
+      })
+      .catch((error) => {
+        return res.status(500).send('Unable to update parliament with your new cluster');
+      });
+  }); // TODO - error?
+});
+
+// TODO use a unique id for the group instead of the title
+// TODO maybe store map of groups? and clusters?
+app.post('/groups/:groupTitle/clusters', function(req, res) {
+  // TODO - validate inputs - require a unique name/title?
+  if (!parliament) { return res.status(500).send('Unable to get parliament'); }
+
+  let cluster = {
+    title: req.body.title,
+    description: req.body.description,
+    url: req.body.url,
+    localUrl: req.body.localUrl,
+    multiviewer: req.body.multiviewer, // TODO these last two are boolean, do something special to make sure it's saved as boolean and not string?
+    disabled: req.body.distabed
+  }
+
+  let foundGroup = false;
+  for(let group of parliament) {
+    if (group.title === req.params.groupTitle) {
+      group.clusters.push(cluster);
+      foundGroup = true;
+      break;
+    }
+  }
+
+  if (!foundGroup) {
+    return res.status(500).send('Unable to find group to place cluster');
+  }
+
+  let json = JSON.stringify(parliament);
+
+  console.log(json);
+
+  fs.writeFile('parliament.json', json, 'utf8', () => {
+    parliamentWithData = JSON.parse(JSON.stringify(parliament)); // TODO - this is hacky
+    updateParliament()
+      .then(() => {
+        return res.send(JSON.stringify(parliamentWithData));
+      })
+      .catch((error) => {
+        return res.status(500).send('Unable to update parliament with your new cluster');
+      });
+  }); // TODO - error?
+});
+
+// TODO use a unique id for the cluster instead of the title
+app.delete('/groups/:groupTitle/clusters/:clusterTitle', function(req, res) {
+  // TODO - validate inputs - require a unique name/title?
+  if (!parliament) { return res.status(500).send('Unable to get parliament'); }
+
+  let foundCluster = false, clusterIndex = 0;
+  for(let group of parliament) {
+    if (group.title === req.params.groupTitle) {
+      for (let cluster of group.clusters) {
+        if (cluster.title === req.params.clusterTitle) {
+          group.clusters.splice(clusterIndex, 1);
+          foundCluster = true;
+          break;
+        }
+        ++clusterIndex;
+      }
+    }
+  }
+
+  if (!foundCluster) {
+    return res.status(500).send('Unable to find cluster to delete');
+  }
+
+  let json = JSON.stringify(parliament);
+
+  console.log(json);
+
+  fs.writeFile('parliament.json', json, 'utf8', () => {
+    parliamentWithData = JSON.parse(JSON.stringify(parliament)); // TODO - this is hacky
+    updateParliament()
+      .then(() => {
+        return res.send(JSON.stringify(parliamentWithData));
+      })
+      .catch((error) => {
+        return res.status(500).send('Unable to update parliament with your new cluster');
+      });
+  }); // TODO - error?
+});
+
+// TODO use a unique id for the cluster instead of the title
+app.put('/groups/:groupTitle/clusters/:clusterTitle', function(req, res) {
+  // TODO - validate inputs
+  if (!parliament) { return res.status(500).send('Unable to get parliament'); }
+
+  let foundCluster = false;
+  for(let group of parliament) {
+    if (group.title === req.params.groupTitle) {
+      for (let cluster of group.clusters) {
+        if (cluster.title === req.params.clusterTitle) {
+          cluster.title = req.body.title;
+          cluster.description = req.body.description;
+          cluster.url = req.body.url;
+          cluster.localUrl = req.body.localUrl;
+          cluster.multiviewer = req.body.multiviewer;
+          cluster.disabled = req.body.disabled;
+          foundCluster = true;
+          break;
+        }
+      }
+    }
+  }
+
+  if (!foundCluster) {
+    return res.status(500).send('Unable to find cluster to delete');
+  }
+
+  let json = JSON.stringify(parliament);
+
+  console.log(json);
+
+  fs.writeFile('parliament.json', json, 'utf8', () => {
+    parliamentWithData = JSON.parse(JSON.stringify(parliament)); // TODO - this is hacky
+    updateParliament()
+      .then(() => {
+        return res.send(JSON.stringify(parliamentWithData));
+      })
+      .catch((error) => {
+        return res.status(500).send('Unable to update parliament with your new cluster');
+      });
+  }); // TODO - error?
 });
 
 
@@ -169,10 +399,13 @@ app.use(function(req, res) {
 
 
 /* LISTEN! ----------------------------------------------------------------- */
-var server = app.listen(8008, function () {
-  var host = server.address().address;
-  var port = server.address().port;
+let server = app.listen(8008, () => {
+  let host = server.address().address;
+  let port = server.address().port;
 
   console.log('App listening at http://%s:%s', host, port);
-  updateParliament();
+
+  timeout = setInterval(() => {
+    updateParliament();
+  }, 10000);
 });

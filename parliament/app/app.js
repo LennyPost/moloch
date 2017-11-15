@@ -3,7 +3,7 @@
   'use strict';
 
 
-  require('../node_modules/bootstrap/js/dist/tooltip');
+  require('../node_modules/bootstrap/js/dist/dropdown');
   require('../node_modules/bootstrap/dist/css/bootstrap.css');
   require('./app.css');
   require('angular-route');
@@ -26,7 +26,7 @@
           title    : 'Parliament',
           template : '<moloch-parliament></moloch-parliament>',
         })
-        .otherwise({
+        .otherwise({ // TODO
           title    : 'Not Found',
           template : '<moloch-404></moloch-404>'
         });
