@@ -8,7 +8,7 @@
 
   /**
    * @class ParliamentController
-   * @classdesc Interacts with session list
+   * @classdesc Interacts with the parliament page
    */
   class ParliamentController {
 
@@ -25,8 +25,18 @@
 
     /* Callback when component is mounted and ready */
     $onInit() { // initialize scope variables
-      this.refreshInterval  = '15000';  // TODO: save this
-      this.compactMode      = false;    // TODO: save this
+      this.refreshInterval  = '15000';
+      this.compactMode      = true;
+      this.loggedIn         = true; //  TODO remove this
+
+      if (localStorage) {
+        if (localStorage['refreshInterval']) {
+          this.refreshInterval = localStorage['refreshInterval'];
+        }
+        if (localStorage['compactMode']) {
+          this.compactMode = localStorage['compactMode'] === 'true';
+        }
+      }
 
       this.loadData();
 
@@ -38,8 +48,8 @@
     loadData() {
       this.$http({ method:'GET', url:'parliament.json' })
         .then((response) => {
-          this.error      = false;
-          this.parliament = response.data;
+          this.error = false;
+          this.updateParliament(response.data);
         }, (error) => {
           this.error = error.statusText ||
             'Error fetching health and status information about Molochs in your parliament. The information displayed below is likely out of date';
@@ -56,6 +66,51 @@
       this.$interval.cancel(interval);
     }
 
+    /**
+     * Updates fetched parliament with current view flags and values
+     * Assumes that groups and clusters within groups are in the same order
+     */
+    updateParliament(data) {
+      if (!this.parliament) {
+        this.parliament = data;
+        return;
+      }
+
+      for(let g = 0, glen = data.length; g < glen; ++g) {
+        let newGroup = data[g];
+        let oldGroup = this.parliament[g];
+
+        newGroup.error                  = oldGroup.error;
+        newGroup.newTitle               = oldGroup.newTitle;
+        newGroup.newDescription         = oldGroup.newDescription;
+        newGroup.filteredClusters       = oldGroup.filteredClusters;
+        newGroup.showEditGroupForm      = oldGroup.showEditGroupForm;
+        newGroup.showNewClusterForm     = oldGroup.showNewClusterForm;
+        newGroup.newClusterTitle        = oldGroup.newClusterTitle;
+        newGroup.newClusterDescription  = oldGroup.newClusterDescription;
+        newGroup.newClusterUrl          = oldGroup.newClusterUrl;
+        newGroup.newClusterLocalUrl     = oldGroup.newClusterLocalUrl;
+        newGroup.newClusterMultiviewer  = oldGroup.newClusterMultiviewer;
+        newGroup.newClusterDisabled     = oldGroup.newClusterDisabled;
+
+        for (let c = 0, clen = newGroup.clusters.length; c < clen; ++c) {
+          let newCluster = newGroup.clusters[c];
+          let oldCluster = oldGroup.clusters[c];
+
+          newCluster.error              = oldCluster.error;
+          newCluster.newTitle           = oldCluster.newTitle;
+          newCluster.newDescription     = oldCluster.newDescription;
+          newCluster.newUrl             = oldCluster.newUrl;
+          newCluster.newLocalUrl        = oldCluster.newLocalUrl;
+          newCluster.newMultiviewer     = oldCluster.newMultiviewer;
+          newCluster.newDisabled        = oldCluster.newDisabled;
+          newCluster.showEditClusterForm= oldCluster.showEditClusterForm;
+        }
+      }
+
+      this.parliament = data;
+    }
+
 
     /* page functions ------------------------------------------------------ */
     login() { // TODO
@@ -68,7 +123,25 @@
       this.loggedIn = false;
     }
 
+    /**
+     * Fired when compact mode button is pressed
+     */
+    toggleCompactMode() {
+      this.compactMode = !this.compactMode;
+
+      if (localStorage) {
+        localStorage['compactMode'] = this.compactMode;
+      }
+    }
+
+    /**
+     * Fired when interval refresh select input is changed
+     */
     changeRefreshInterval() {
+      if (localStorage) {
+        localStorage['refreshInterval'] = this.refreshInterval;
+      }
+
       if (this.refreshInterval) {
         this.loadData();
         this.startAutoRefresh();
@@ -77,8 +150,18 @@
       }
     }
 
+    /**
+     * Creates a new group in the parliament
+     * newGroupTitle is required
+     */
     createNewGroup() {
-      // TODO validate inputs
+      this.error = false;
+
+      if (!this.newGroupTitle) {
+        this.error = 'A group must have a title';
+        return;
+      }
+
       let options = {
         method: 'POST',
         url   : '/groups',
@@ -91,15 +174,24 @@
       this.$http(options)
         .then((response) => {
           this.showNewGroupForm = false;
-          this.parliament = response.data;
+          this.parliament.push({
+            title: this.newGroupTitle,
+            description: this.newGroupDescription,
+            clusters: []
+          });
         }, (error) => {
-          // TODO display error
-          console.log(error);
+          this.error = error.data || 'Unable to create group';
         });
     }
 
+    /**
+     * Sends request to delete a group
+     * If succesful, removes the group from the view, otherwise displays error
+     * @param {object} group - the group to delete
+     */
     deleteGroup(group) {
-      // TODO validate input
+      group.error = false;
+
       let options = {
         method: 'DELETE',
         url   : `/groups/${group.title}`
@@ -107,21 +199,45 @@
 
       this.$http(options)
         .then((response) => {
-          this.parliament = response.data; // TODO don't need this
+          group.error = false;
+          // remove the group from the parliament
+          let index = 0;
+          for(let g of this.parliament) {
+            if (g.title === group.title) {
+              this.parliament.splice(index, 1);
+              break;
+            }
+            ++index;
+          }
         }, (error) => {
-          // TODO display error
-          console.log(error);
+          group.error = error.data || 'Unable to delete this group';
         });
     }
 
+    /**
+     * Displays form fields to edit a group's title and description
+     * Prefills the inputs with the existing group's title and description
+     * @param {object} group - the group to display a form for
+     */
     displayEditGroupForm(group) {
       group.showEditGroupForm = true;
       group.newTitle = group.title;
       group.newDescription = group.description;
     }
 
+    /**
+     * Sends request to edit a group
+     * If succesful, updates the group in the view, otherwise displays error
+     * @param {object} group - the group to edit
+     */
     editGroup(group) {
-      // TODO validate inputs
+      group.error = false;
+
+      if (!group.newTitle) {
+        group.error = 'A group must have a title';
+        return;
+      }
+
       let options = {
         method: 'PUT',
         url   : `/groups/${group.title}`,
@@ -133,40 +249,67 @@
 
       this.$http(options)
         .then((response) => {
-          this.showEditGroupForm = false;
-          this.parliament = response.data; // TODO don't need this
+          // update group with new values and close form
+          group.error = false;
+          group.title = group.newTitle;
+          group.description = group.newDescription;
+          group.showEditGroupForm = false;
         }, (error) => {
-          // TODO display error
-          console.log(error);
+          group.error = error.data || 'Unable to update this group';
         });
     }
 
+    /**
+     * Sends a request to create a new cluster within a group
+     * If succesful, updates the group in the view, otherwise displays error
+     * @param {object} group - the group to add the cluster
+     */
     createNewCluster(group) {
-      // TODO validate inputs
+      group.error = false;
+
+      if (!group.newClusterTitle) {
+        group.error = 'A cluster must have a title';
+        return;
+      }
+      if (!group.newClusterUrl) {
+        group.error = 'A cluster must have a url';
+        return;
+      }
+
+      let newCluster = {
+        title       : group.newClusterTitle,
+        description : group.newClusterDescription,
+        url         : group.newClusterUrl,
+        localUrl    : group.newClusterLocalUrl,
+        multiviewer : group.newClusterMultiviewer,
+        disabled    : group.newClusterDisabled
+      }
+
       let options = {
         method: 'POST',
         url   : `/groups/${group.title}/clusters`,
-        data  : {
-          title       : this.newClusterTitle,
-          description : this.newClusterDescription,
-          url         : this.newClusterUrl,
-          localUrl    : this.newClusterLocalUrl,
-          multiviewer : this.newClusterMultiviewer,
-          disabled    : this.newClusterDisabled
-        }
+        data  : newCluster
       };
 
       this.$http(options)
         .then((response) => {
-          this.showNewGroupForm = false;
-          this.parliament = response.data;
+          group.error = false;
+          group.showNewClusterForm = false;
+          group.clusters.push(newCluster);
         }, (error) => {
-          // TODO display error
-          console.log(error);
+          group.error = error.data || 'Unable to add a cluster to this group';
         });
     }
 
+    /**
+     * Sends a request to delete a cluster within a group
+     * If succesful, updates the group in the view, otherwise displays error
+     * @param {object} group - the group to remove the cluster from
+     * @param {object} cluster - the cluster to remove
+     */
     deleteCluster(group, cluster) {
+      group.error = false;
+
       let options = {
         method: 'DELETE',
         url   : `/groups/${group.title}/clusters/${cluster.title}`
@@ -174,13 +317,25 @@
 
       this.$http(options)
         .then((response) => {
-          this.parliament = response.data; // TODO don't need this
+          group.error = false;
+          let index = 0;
+          for(let c of group.clusters) {
+            if (c.title === cluster.title) {
+              group.clusters.splice(index, 1);
+              break;
+            }
+            ++index;
+          }
         }, (error) => {
-          // TODO display error
-          console.log(error);
+          group.error = error.data || 'Unable to remove cluster from this group';
         });
     }
 
+    /**
+     * Displays form fields to edit a cluster's data
+     * Prefills the inputs with the existing cluster's data
+     * @param {object} cluster - the cluster to display a form for
+     */
     displayEditClusterForm(cluster) {
       cluster.showEditClusterForm = true;
       cluster.newTitle = cluster.title;
@@ -191,28 +346,46 @@
       cluster.newDisabled = cluster.disabled;
     }
 
+    /**
+     * Sends request to edit a cluster
+     * If succesful, updates the cluster in the view, otherwise displays error
+     * @param {object} group - the group containing the cluster
+     * @param {object} cluster - the cluster to update
+     */
     editCluster(group, cluster) {
-      // TODO validate inputs
+      cluster.error = false;
+
+      if (!cluster.newTitle) {
+        cluster.error = 'A cluster must have a title';
+        return;
+      }
+      if (!cluster.newUrl) {
+        cluster.error = 'A cluster must have a url';
+        return;
+      }
+
+      let updatedCluster = {
+        title       : cluster.newTitle,
+        description : cluster.newDescription,
+        url         : cluster.newUrl,
+        localUrl    : cluster.newLocalUrl,
+        multiviewer : cluster.newMultiviewer,
+        disabled    : cluster.newDisabled
+      }
+
       let options = {
         method: 'PUT',
         url   : `/groups/${group.title}/clusters/${cluster.title}`,
-        data  : {
-          title       : cluster.newTitle,
-          description : cluster.newDescription,
-          url         : cluster.newUrl,
-          localUrl    : cluster.newLocalUrl,
-          multiviewer : cluster.newMultiviewer,
-          disabled    : cluster.newDisabled
-        }
+        data  : updatedCluster
       };
 
       this.$http(options)
         .then((response) => {
+          cluster.error = false;
           cluster.showEditClusterForm = false;
-          this.parliament = response.data; // TODO don't need this
+          cluster = updatedCluster;
         }, (error) => {
-          // TODO display error
-          console.log(error);
+          cluster.error = error.data || 'Unable to update this cluster';
         });
     }
 

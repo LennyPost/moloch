@@ -48,7 +48,7 @@ function updateParliament() {
           if (!cluster.disabled) {
             promises.push(getHealth(cluster));
           }
-          // don't get stats for multiviewers of offline clusters
+          // don't get stats for multiviewers or offline clusters
           if (!cluster.multiviewer && !cluster.disabled) {
             promises.push(getStats(cluster));
           }
@@ -185,7 +185,7 @@ app.post('/groups', function(req, res) {
     parliamentWithData = JSON.parse(JSON.stringify(parliament)); // TODO - this is hacky
     updateParliament()
       .then(() => {
-        return res.send(JSON.stringify(parliamentWithData));
+        return res.send('success');
       })
       .catch((error) => {
         return res.status(500).send('Unable to update parliament with your new group');
@@ -220,10 +220,10 @@ app.delete('/groups/:groupTitle', function(req, res) {
     parliamentWithData = JSON.parse(JSON.stringify(parliament)); // TODO - this is hacky
     updateParliament()
       .then(() => {
-        return res.send(JSON.stringify(parliamentWithData));
+        return res.send('success');
       })
       .catch((error) => {
-        return res.status(500).send('Unable to update parliament with your new cluster');
+        return res.status(500).send('Unable to remove that group from the parliament');
       });
   }); // TODO - error?
 });
@@ -257,10 +257,10 @@ app.put('/groups/:groupTitle', function(req, res) {
     parliamentWithData = JSON.parse(JSON.stringify(parliament)); // TODO - this is hacky
     updateParliament()
       .then(() => {
-        return res.send(JSON.stringify(parliamentWithData));
+        return res.send('success');
       })
       .catch((error) => {
-        return res.status(500).send('Unable to update parliament with your new cluster');
+        return res.status(500).send('Unable to update this group in your parliament');
       });
   }); // TODO - error?
 });
@@ -276,7 +276,7 @@ app.post('/groups/:groupTitle/clusters', function(req, res) {
     description: req.body.description,
     url: req.body.url,
     localUrl: req.body.localUrl,
-    multiviewer: req.body.multiviewer, // TODO these last two are boolean, do something special to make sure it's saved as boolean and not string?
+    multiviewer: req.body.multiviewer,
     disabled: req.body.distabed
   }
 
@@ -301,7 +301,7 @@ app.post('/groups/:groupTitle/clusters', function(req, res) {
     parliamentWithData = JSON.parse(JSON.stringify(parliament)); // TODO - this is hacky
     updateParliament()
       .then(() => {
-        return res.send(JSON.stringify(parliamentWithData));
+        return res.send('success');
       })
       .catch((error) => {
         return res.status(500).send('Unable to update parliament with your new cluster');
@@ -340,10 +340,10 @@ app.delete('/groups/:groupTitle/clusters/:clusterTitle', function(req, res) {
     parliamentWithData = JSON.parse(JSON.stringify(parliament)); // TODO - this is hacky
     updateParliament()
       .then(() => {
-        return res.send(JSON.stringify(parliamentWithData));
+        return res.send('success');
       })
       .catch((error) => {
-        return res.status(500).send('Unable to update parliament with your new cluster');
+        return res.status(500).send('Unable to remove that cluster from your parliament');
       });
   }); // TODO - error?
 });
@@ -383,10 +383,10 @@ app.put('/groups/:groupTitle/clusters/:clusterTitle', function(req, res) {
     parliamentWithData = JSON.parse(JSON.stringify(parliament)); // TODO - this is hacky
     updateParliament()
       .then(() => {
-        return res.send(JSON.stringify(parliamentWithData));
+        return res.send('success');
       })
       .catch((error) => {
-        return res.status(500).send('Unable to update parliament with your new cluster');
+        return res.status(500).send('Unable to update the cluster');
       });
   }); // TODO - error?
 });
