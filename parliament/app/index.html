@@ -122,7 +122,7 @@
     </div>
 
     <!-- group -->
-    <div ng-repeat="group in $ctrl.parliament" class="mb-4">
+    <div ng-repeat="group in $ctrl.parliament.groups" class="mb-4">
 
       <!-- group title -->
       <div class="row" ng-if="group.filteredClusters.length > 0 || (!group.clusters.length && !$ctrl.searchTerm)">

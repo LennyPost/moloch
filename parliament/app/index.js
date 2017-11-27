@@ -75,9 +75,9 @@
         return;
       }
 
-      for(let g = 0, glen = data.length; g < glen; ++g) {
-        let newGroup = data[g];
-        let oldGroup = this.parliament[g];
+      for(let g = 0, glen = data.groups.length; g < glen; ++g) {
+        let newGroup = data.groups[g];
+        let oldGroup = this.parliament.groups[g];
 
         newGroup.error                  = oldGroup.error;
         newGroup.newTitle               = oldGroup.newTitle;
@@ -173,11 +173,7 @@
       this.$http(options)
         .then((response) => {
           this.showNewGroupForm = false;
-          this.parliament.push({
-            title: this.newGroupTitle,
-            description: this.newGroupDescription,
-            clusters: []
-          });
+          this.parliament.groups.push(response.data.group);
         }, (error) => {
           this.error = error.data || 'Unable to create group';
         });
@@ -193,7 +189,7 @@
 
       let options = {
         method: 'DELETE',
-        url   : `/groups/${group.title}`
+        url   : `/groups/${group.id}`
       };
 
       this.$http(options)
@@ -201,9 +197,9 @@
           group.error = false;
           // remove the group from the parliament
           let index = 0;
-          for(let g of this.parliament) {
+          for(let g of this.parliament.groups) {
             if (g.title === group.title) {
-              this.parliament.splice(index, 1);
+              this.parliament.groups.splice(index, 1);
               break;
             }
             ++index;
@@ -239,7 +235,7 @@
 
       let options = {
         method: 'PUT',
-        url   : `/groups/${group.title}`,
+        url   : `/groups/${group.id}`,
         data  : {
           title: group.newTitle,
           description: group.newDescription
@@ -286,7 +282,7 @@
 
       let options = {
         method: 'POST',
-        url   : `/groups/${group.title}/clusters`,
+        url   : `/groups/${group.id}/clusters`,
         data  : newCluster
       };
 
@@ -294,8 +290,8 @@
         .then((response) => {
           group.error = false;
           group.showNewClusterForm = false;
-          group.clusters.push(newCluster);
-          this.updateParliament(response.data);
+          group.clusters.push(response.data.cluster);
+          this.updateParliament(response.data.parliament);
         }, (error) => {
           group.error = error.data || 'Unable to add a cluster to this group';
         });
@@ -312,7 +308,7 @@
 
       let options = {
         method: 'DELETE',
-        url   : `/groups/${group.title}/clusters/${cluster.title}`
+        url   : `/groups/${group.id}/clusters/${cluster.id}`
       };
 
       this.$http(options)
@@ -338,12 +334,12 @@
      */
     displayEditClusterForm(cluster) {
       cluster.showEditClusterForm = true;
-      cluster.newTitle = cluster.title;
-      cluster.newDescription = cluster.description;
-      cluster.newUrl = cluster.url;
-      cluster.newLocalUrl = cluster.localUrl;
-      cluster.newMultiviewer = cluster.multiviewer;
-      cluster.newDisabled = cluster.disabled;
+      cluster.newTitle        = cluster.title;
+      cluster.newDescription  = cluster.description;
+      cluster.newUrl          = cluster.url;
+      cluster.newLocalUrl     = cluster.localUrl;
+      cluster.newMultiviewer  = cluster.multiviewer;
+      cluster.newDisabled     = cluster.disabled;
     }
 
     /**
@@ -375,7 +371,7 @@
 
       let options = {
         method: 'PUT',
-        url   : `/groups/${group.title}/clusters/${cluster.title}`,
+        url   : `/groups/${group.id}/clusters/${cluster.id}`,
         data  : updatedCluster
       };
 
