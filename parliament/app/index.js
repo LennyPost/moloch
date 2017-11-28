@@ -50,8 +50,12 @@
           this.error = false;
           this.updateParliament(response.data);
         }, (error) => {
-          this.error = error.data.text || error.statusText ||
-            'Error fetching health and status information about Molochs in your parliament. The information displayed below is likely out of date';
+          if (error.data && error.data.text) {
+            this.error = error.data.text;
+          } else {
+            this.error = error.statusText ||
+              'Error fetching health and status information about Molochs in your parliament. The information displayed below is likely out of date';
+          }
         });
     }
 
