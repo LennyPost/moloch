@@ -1,5 +1,6 @@
 'use strict';
 
+
 const express = require('express');
 const path    = require('path');
 const http    = require('http');
@@ -11,30 +12,51 @@ const rp      = require('request-promise');
 const bp      = require('body-parser');
 
 const app     = express();
+const router  = express.Router();
 
-// TODO maybe store map of groups? and clusters?
+
+// global variables
 let parliament = require(`${__dirname}/parliament.json`);
-let parliamentWithData = JSON.parse(JSON.stringify(parliament)); // TODO - this is hacky
+let parliamentWithData = JSON.parse(JSON.stringify(parliament));
 let groupId = 0, clusterId = 0;
 let timeout;
+// TODO maybe store map of groups? and clusters?
 
-
-app.use(bp.json());
-app.use(bp.urlencoded({ extended: true }));
+/* app setup --------------------------------------------------------------- */
+// serve parliament app page
+app.set('view engine', 'pug');
+app.set('views', path.join(__dirname, 'views'));
+app.get('/', (req, res) => { res.render('app'); });
 
 app.use(favicon(__dirname + '/public/favicon.ico'));
 
 // font awesome doesn't work with webpack, so serve it up
-app.use('/font-awesome', express.static(`${__dirname}/node_modules/font-awesome`, { maxAge: 600 * 1000}));
+app.use('/font-awesome', express.static(`${__dirname}/node_modules/font-awesome`, { maxAge:600*1000 }));
 
-app.use('/public', express.static(`${__dirname}/public`, { maxAge: 600 * 1000 }));
+// serve public files
+app.use('/public', express.static(`${__dirname}/public`, { maxAge:600*1000 }));
 
-// app bundles
-app.use('/app.bundle.js', function(req, res) {
-  res.sendFile(`${__dirname}/bundle/app.bundle.js`);
-});
-app.use('/vendor.bundle.js', function(req, res) {
-  res.sendFile(`${__dirname}/bundle/vendor.bundle.js`);
+// serve app bundles
+app.use('/app.bundle.js', express.static(`${__dirname}/bundle/app.bundle.js`, { maxAge:600*1000 }));
+app.use('/vendor.bundle.js', express.static(`${__dirname}/bundle/vendor.bundle.js`, { maxAge:600*1000 }));
+
+// define router to mount api related functions
+app.use('/', router);
+router.use(bp.json());
+router.use(bp.urlencoded({ extended: true }));
+
+
+/* Middleware -------------------------------------------------------------- */
+// App should always have parliament data
+router.use((req, res, next) => {
+  if (!parliamentWithData) {
+    return res.status(500).send(JSON.stringify({
+      success : false,
+      text    : 'Unable to fetch parliament data.'
+    }));
+  }
+
+  next();
 });
 
 
@@ -180,41 +202,58 @@ function getStats(cluster) {
   });
 }
 
+function sendError(req, res, status, errorText) {
+  res.status(status || 500).send(JSON.stringify({
+    success : false,
+    text    : errorText || 'Error'
+  }));
+}
+
+function writeParliament(req, res, successObj, errorText, sendParliament) {
+  fs.writeFile('parliament.json', JSON.stringify(parliament), 'utf8', () => {
+
+    parliamentWithData = JSON.parse(JSON.stringify(parliament));
+
+    updateParliament()
+      .then(() => {
+        // send the updated parliament with the response
+        if (sendParliament && successObj.parliament) {
+          successObj.parliament = parliamentWithData;
+        }
+        return res.send(JSON.stringify(successObj));
+      })
+      .catch((error) => {
+        return sendError(req, res, 500, errorText);
+      });
+
+  }); // TODO - handle error with json file writing
+}
+
 
 /* APIs -------------------------------------------------------------------- */
-app.get('/parliament.json', function(req, res) {
-  if (!parliamentWithData) { return res.status(500).send('Unable to get parliament'); }
+// Get parliament with stats
+router.get('/api/parliament', (req, res) => {
   return res.send(JSON.stringify(parliamentWithData));
 });
 
-app.post('/groups', function(req, res) {
-  // TODO - validate inputs - require a unique name/title?
-  // TODO - make this general middleware?
-  if (!parliament) { return res.status(500).send('Unable to get parliament'); }
+// Create a new group in the parliament
+router.post('/api/groups', (req, res) => {
+  if (!req.body.title) {
+    return sendError(req, res, 422, 'A group must have a title.');
+  }
 
   let newGroup = { title:req.body.title, id:groupId++, clusters:[] };
   if (req.body.description) { newGroup.description = req.body.description; }
 
   parliament.groups.push(newGroup);
 
-  let json = JSON.stringify(parliament);
-
-  fs.writeFile('parliament.json', json, 'utf8', () => {
-    parliamentWithData = JSON.parse(JSON.stringify(parliament)); // TODO - this is hacky
-    updateParliament()
-      .then(() => {
-        return res.send(JSON.stringify({success:true, group:newGroup}));
-      })
-      .catch((error) => {
-        return res.status(500).send('Unable to update parliament with your new group');
-      });
-  }); // TODO - error?
+  let successObj  = { success:true, group:newGroup, text: 'Successfully added new group.' };
+  let errorText   = 'Unable to add that group to your parliament.';
+  writeParliament(req, res, successObj, errorText);
 });
 
-app.delete('/groups/:id', function(req, res) {
-  // TODO - validate inputs - require a unique name/title?
-  if (!parliament) { return res.status(500).send('Unable to get parliament'); }
-
+// Delete a group in the parliament
+router.delete('/api/groups/:id', (req, res) => {
   let foundGroup = false, index = 0;
   for(let group of parliament.groups) {
     if (group.id === parseInt(req.params.id)) {
@@ -226,26 +265,19 @@ app.delete('/groups/:id', function(req, res) {
   }
 
   if (!foundGroup) {
-    return res.status(500).send('Unable to find group to delete');
+    return sendError(req, res, 500, 'Unable to find group to delete.');
   }
 
-  let json = JSON.stringify(parliament);
-
-  fs.writeFile('parliament.json', json, 'utf8', () => {
-    parliamentWithData = JSON.parse(JSON.stringify(parliament)); // TODO - this is hacky
-    updateParliament()
-      .then(() => {
-        return res.send(JSON.stringify({success:true, text:'Successfully removed the requested group'}));
-      })
-      .catch((error) => {
-        return res.status(500).send('Unable to remove that group from the parliament');
-      });
-  }); // TODO - error?
+  let successObj  = { success:true, text:'Successfully removed the requested group.' };
+  let errorText   = 'Unable to remove that group from the parliament.';
+  writeParliament(req, res, successObj, errorText);
 });
 
-app.put('/groups/:id', function(req, res) {
-  // TODO - validate inputs - require a unique name/title?
-  if (!parliament) { return res.status(500).send('Unable to get parliament'); }
+// Update a group in the parliament
+router.put('/api/groups/:id', (req, res) => {
+  if (!req.body.title) {
+    return sendError(req, res, 422, 'A group must have a title.');
+  }
 
   let foundGroup = false;
   for(let group of parliament.groups) {
@@ -260,26 +292,22 @@ app.put('/groups/:id', function(req, res) {
   }
 
   if (!foundGroup) {
-    return res.status(500).send('Unable to find group to edit');
+    return sendError(req, res, 500, 'Unable to find group to edit.');
   }
 
-  let json = JSON.stringify(parliament);
-
-  fs.writeFile('parliament.json', json, 'utf8', () => {
-    parliamentWithData = JSON.parse(JSON.stringify(parliament)); // TODO - this is hacky
-    updateParliament()
-      .then(() => {
-        return res.send(JSON.stringify({success:true, text:'Successfully updated the requested group'}));
-      })
-      .catch((error) => {
-        return res.status(500).send('Unable to update this group in your parliament');
-      });
-  }); // TODO - error?
+  let successObj  = { success:true, text:'Successfully updated the requested group.' };
+  let errorText   = 'Unable to update that group in the parliament.';
+  writeParliament(req, res, successObj, errorText);
 });
 
-app.post('/groups/:id/clusters', function(req, res) {
-  // TODO - validate inputs - require a unique name/title?
-  if (!parliament) { return res.status(500).send('Unable to get parliament'); }
+// Create a new cluster within an existing group
+router.post('/api/groups/:id/clusters', (req, res) => {
+  if (!req.body.title) {
+    return sendError(req, res, 422, 'A cluster must have a title.');
+  }
+  if (!req.body.url) {
+    return sendError(req, res, 422, 'A cluster must have a url.');
+  }
 
   let newCluster = {
     title       : req.body.title,
@@ -301,31 +329,21 @@ app.post('/groups/:id/clusters', function(req, res) {
   }
 
   if (!foundGroup) {
-    return res.status(500).send('Unable to find group to place cluster');
+    return sendError(req, res, 500, 'Unable to find group to place cluster.');
   }
 
-  let json = JSON.stringify(parliament);
-
-  fs.writeFile('parliament.json', json, 'utf8', () => {
-    parliamentWithData = JSON.parse(JSON.stringify(parliament)); // TODO - this is hacky
-    updateParliament()
-      .then(() => {
-        return res.send(JSON.stringify({
-          success   :true,
-          cluster   :newCluster,
-          parliament:parliamentWithData
-        }));
-      })
-      .catch((error) => {
-        return res.status(500).send('Unable to update parliament with your new cluster');
-      });
-  }); // TODO - error?
+  let successObj  = {
+    success   : true,
+    cluster   : newCluster,
+    parliament: parliamentWithData,
+    text      : 'Successfully added the requested cluster.'
+  };
+  let errorText   = 'Unable to add that cluster to the parliament.';
+  writeParliament(req, res, successObj, errorText, true);
 });
 
-app.delete('/groups/:groupId/clusters/:clusterId', function(req, res) {
-  // TODO - validate inputs - require a unique name/title?
-  if (!parliament) { return res.status(500).send('Unable to get parliament'); }
-
+// Delete a cluster
+router.delete('/api/groups/:groupId/clusters/:clusterId', (req, res) => {
   let foundCluster = false, clusterIndex = 0;
   for(let group of parliament.groups) {
     if (group.id === parseInt(req.params.groupId)) {
@@ -341,26 +359,22 @@ app.delete('/groups/:groupId/clusters/:clusterId', function(req, res) {
   }
 
   if (!foundCluster) {
-    return res.status(500).send('Unable to find cluster to delete');
+    return sendError(req, res, 500, 'Unable to find cluster to delete.');
   }
 
-  let json = JSON.stringify(parliament);
-
-  fs.writeFile('parliament.json', json, 'utf8', () => {
-    parliamentWithData = JSON.parse(JSON.stringify(parliament)); // TODO - this is hacky
-    updateParliament()
-      .then(() => {
-        return res.send(JSON.stringify({success:true, text:'Successfully removed the requested cluster'}));
-      })
-      .catch((error) => {
-        return res.status(500).send('Unable to remove that cluster from your parliament');
-      });
-  }); // TODO - error?
+  let successObj  = { success:true, text: 'Successfully removed the requested cluster.' };
+  let errorText   = 'Unable to remove that cluster from your parliament.';
+  writeParliament(req, res, successObj, errorText);
 });
 
-app.put('/groups/:groupId/clusters/:clusterId', function(req, res) {
-  // TODO - validate inputs
-  if (!parliament) { return res.status(500).send('Unable to get parliament'); }
+// Update a cluster
+router.put('/api/groups/:groupId/clusters/:clusterId', (req, res) => {
+  if (!req.body.title) {
+    return sendError(req, res, 422, 'A cluster must have a title.');
+  }
+  if (!req.body.url) {
+    return sendError(req, res, 422, 'A cluster must have a url.');
+  }
 
   let foundCluster = false;
   for(let group of parliament.groups) {
@@ -381,27 +395,12 @@ app.put('/groups/:groupId/clusters/:clusterId', function(req, res) {
   }
 
   if (!foundCluster) {
-    return res.status(500).send('Unable to find cluster to update');
+    return sendError(req, res, 500, 'Unable to find cluster to update.');
   }
 
-  let json = JSON.stringify(parliament);
-
-  fs.writeFile('parliament.json', json, 'utf8', () => {
-    parliamentWithData = JSON.parse(JSON.stringify(parliament)); // TODO - this is hacky
-    updateParliament()
-      .then(() => {
-        return res.send(JSON.stringify({success:true, text:'Successfully updated the requested cluster'}));
-      })
-      .catch((error) => {
-        return res.status(500).send('Unable to update the cluster');
-      });
-  }); // TODO - error?
-});
-
-
-// app page
-app.use(function(req, res) {
-  res.render('app.pug');
+  let successObj  = { success:true, text: 'Successfully updated the requested cluster.' };
+  let errorText   = 'Unable to update that cluster in your parliament.';
+  writeParliament(req, res, successObj, errorText);
 });
 
 

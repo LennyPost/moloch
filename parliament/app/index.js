@@ -45,12 +45,12 @@
 
     /* controller functions ------------------------------------------------ */
     loadData() {
-      this.$http({ method:'GET', url:'parliament.json' })
+      this.$http({ method:'GET', url:'/api/parliament' })
         .then((response) => {
           this.error = false;
           this.updateParliament(response.data);
         }, (error) => {
-          this.error = error.statusText ||
+          this.error = error.data.text || error.statusText ||
             'Error fetching health and status information about Molochs in your parliament. The information displayed below is likely out of date';
         });
     }
@@ -163,7 +163,7 @@
 
       let options = {
         method: 'POST',
-        url   : '/groups',
+        url   : '/api/groups',
         data  : {
           title: this.newGroupTitle,
           description: this.newGroupDescription
@@ -175,7 +175,7 @@
           this.showNewGroupForm = false;
           this.parliament.groups.push(response.data.group);
         }, (error) => {
-          this.error = error.data || 'Unable to create group';
+          this.error = error.data.text || 'Unable to create group';
         });
     }
 
@@ -189,7 +189,7 @@
 
       let options = {
         method: 'DELETE',
-        url   : `/groups/${group.id}`
+        url   : `/api/groups/${group.id}`
       };
 
       this.$http(options)
@@ -205,7 +205,7 @@
             ++index;
           }
         }, (error) => {
-          group.error = error.data || 'Unable to delete this group';
+          group.error = error.data.text || 'Unable to delete this group';
         });
     }
 
@@ -235,7 +235,7 @@
 
       let options = {
         method: 'PUT',
-        url   : `/groups/${group.id}`,
+        url   : `/api/groups/${group.id}`,
         data  : {
           title: group.newTitle,
           description: group.newDescription
@@ -250,7 +250,7 @@
           group.description = group.newDescription;
           group.showEditGroupForm = false;
         }, (error) => {
-          group.error = error.data || 'Unable to update this group';
+          group.error = error.data.text || 'Unable to update this group';
         });
     }
 
@@ -282,7 +282,7 @@
 
       let options = {
         method: 'POST',
-        url   : `/groups/${group.id}/clusters`,
+        url   : `/api/groups/${group.id}/clusters`,
         data  : newCluster
       };
 
@@ -293,7 +293,7 @@
           group.clusters.push(response.data.cluster);
           this.updateParliament(response.data.parliament);
         }, (error) => {
-          group.error = error.data || 'Unable to add a cluster to this group';
+          group.error = error.data.text || 'Unable to add a cluster to this group';
         });
     }
 
@@ -308,7 +308,7 @@
 
       let options = {
         method: 'DELETE',
-        url   : `/groups/${group.id}/clusters/${cluster.id}`
+        url   : `/api/groups/${group.id}/clusters/${cluster.id}`
       };
 
       this.$http(options)
@@ -323,7 +323,7 @@
             ++index;
           }
         }, (error) => {
-          group.error = error.data || 'Unable to remove cluster from this group';
+          group.error = error.data.text || 'Unable to remove cluster from this group';
         });
     }
 
@@ -371,7 +371,7 @@
 
       let options = {
         method: 'PUT',
-        url   : `/groups/${group.id}/clusters/${cluster.id}`,
+        url   : `/api/groups/${group.id}/clusters/${cluster.id}`,
         data  : updatedCluster
       };
 
@@ -386,7 +386,7 @@
           cluster.multiviewer = cluster.newMultiviewer;
           cluster.disabled    = cluster.newDisabled;
         }, (error) => {
-          cluster.error = error.data || 'Unable to update this cluster';
+          cluster.error = error.data.text || 'Unable to update this cluster';
         });
     }
 
