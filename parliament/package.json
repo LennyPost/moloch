@@ -13,6 +13,8 @@
     "font-awesome": "^4.7.0",
     "html-loader": "^0.5.1",
     "jquery": "^3.2.1",
+    "jsonwebtoken": "^8.1.0",
+    "morgan": "^1.9.0",
     "popper.js": "^1.12.6",
     "pug": "^2.0.0-rc.4",
     "request": "^2.83.0",
@@ -24,7 +26,7 @@
   },
   "scripts": {
     "start": "node parliament.js",
-    "start:test": "node parliament.js & webpack -d --watch --display-error-details",
+    "dev": "node parliament.js & webpack -d --watch --display-error-details",
     "prestart": "npm run bundle:min",
     "bundle:min": "webpack --define process.env.NODE_ENV=production --progress --bail",
     "lint": "jshint app parliament.js",

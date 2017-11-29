@@ -18,9 +18,10 @@
      *
      * @ngInject
      */
-    constructor($http, $interval) {
+    constructor($http, $interval, $rootScope) {
       this.$http      = $http;
       this.$interval  = $interval;
+      this.$rootScope = $rootScope;
     }
 
     /* Callback when component is mounted and ready */
@@ -29,6 +30,9 @@
       this.compactMode      = false;
 
       if (localStorage) {
+        if (localStorage.token) {
+          this.$rootScope.loggedIn = true;
+        }
         if (localStorage.refreshInterval !== undefined) {
           this.refreshInterval = localStorage.refreshInterval;
         }
@@ -119,11 +123,36 @@
     login() { // TODO
       this.showLoginInput = !this.showLoginInput;
 
-      if (!this.showLoginInput) { this.loggedIn = true; }
+      if (!this.showLoginInput) {
+        if (!this.password) {
+          this.error = 'Must provide a password to login.';
+          return;
+        }
+
+        let options = {
+          method: 'POST',
+          url   : '/api/authenticate',
+          data  : { password:this.password }
+        };
+
+        this.$http(options)
+          .then((response) => {
+            this.error = false;
+            this.password = null;
+            this.$rootScope.loggedIn = true;
+            localStorage.token = response.data.token;
+          }, (error) => {
+            this.password = null;
+            this.$rootScope.loggedIn = false;
+            this.error = error.data.text || 'Unable to login.';
+            localStorage.token = '';
+          });
+      }
     }
 
     logout() { // TODO
-      this.loggedIn = false;
+      localStorage.token = '';
+      this.$rootScope.loggedIn = false;
     }
 
     /**
@@ -396,7 +425,7 @@
 
   }
 
-  ParliamentController.$inject = ['$http','$interval'];
+  ParliamentController.$inject = ['$http','$interval','$rootScope'];
 
 
   angular.module('parliament')

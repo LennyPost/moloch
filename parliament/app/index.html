@@ -5,20 +5,20 @@
       <div class="col-md-12">
         <h2>
           <!-- not logged in -->
-          <span ng-if="!$ctrl.loggedIn">
+          <span ng-if="!$root.loggedIn">
             <!-- login mode button -->
             <a class="btn btn-outline-success pull-right cursor-pointer ml-1"
               ng-click="$ctrl.login()">
               <span class="fa fa-unlock"></span>&nbsp;
               Login
             </a> <!-- /login mode button -->
-            <input class="form-control pull-right"
+            <input class="form-control pull-right" ng-model="$ctrl.password"
               ng-class="{'hide-login':!$ctrl.showLoginInput,'show-login ml-4':$ctrl.showLoginInput}"
               placeholder="password please" type="password">
           </span> <!-- /not logged in -->
           <!-- logged in -->
           <a class="btn btn-outline-warning pull-right cursor-pointer ml-4"
-            ng-click="$ctrl.logout()" ng-if="$ctrl.loggedIn">
+            ng-click="$ctrl.logout()" ng-if="$root.loggedIn">
             <span class="fa fa-lock"></span>&nbsp;
             Logout
           </a> <!-- /logged in -->
@@ -75,19 +75,19 @@
       </div>
       <div class="col-md-4">
         <a class="btn btn-outline-primary cursor-pointer pull-right"
-          ng-if="!$ctrl.showNewGroupForm && $ctrl.loggedIn"
+          ng-if="!$ctrl.showNewGroupForm && $root.loggedIn"
           ng-click="$ctrl.showNewGroupForm = true;">
           <span class="fa fa-plus-circle"></span>&nbsp;
           New Group
         </a>
         <a class="btn btn-outline-success cursor-pointer pull-right"
-          ng-if="$ctrl.showNewGroupForm && $ctrl.loggedIn"
+          ng-if="$ctrl.showNewGroupForm && $root.loggedIn"
           ng-click="$ctrl.createNewGroup();">
           <span class="fa fa-plus-circle"></span>&nbsp;
           Create
         </a>
         <a class="btn btn-outline-warning cursor-pointer pull-right mr-1"
-          ng-if="$ctrl.showNewGroupForm && $ctrl.loggedIn"
+          ng-if="$ctrl.showNewGroupForm && $root.loggedIn"
           ng-click="$ctrl.showNewGroupForm = false">
           <span class="fa fa-ban"></span>&nbsp;
           Cancel
@@ -128,37 +128,37 @@
       <div class="row" ng-if="group.filteredClusters.length > 0 || (!group.clusters.length && !$ctrl.searchTerm)">
         <div class="col-md-12">
           <h5 class="mb-1">
-            <a ng-if="!group.showNewClusterForm && !group.showEditGroupForm && $ctrl.loggedIn"
+            <a ng-if="!group.showNewClusterForm && !group.showEditGroupForm && $root.loggedIn"
               ng-click="group.showNewClusterForm = true;"
               class="btn btn-sm btn-outline-info pull-right cursor-pointer mb-1">
               <span class="fa fa-plus-circle"></span>&nbsp;
               New Cluster
             </a>
             <a class="btn btn-sm btn-outline-success cursor-pointer pull-right mb-1"
-              ng-if="group.showNewClusterForm && $ctrl.loggedIn"
+              ng-if="group.showNewClusterForm && $root.loggedIn"
               ng-click="$ctrl.createNewCluster(group);">
               <span class="fa fa-plus-circle"></span>&nbsp;
               Create
             </a>
-            <a ng-if="group.showEditGroupForm && $ctrl.loggedIn"
+            <a ng-if="group.showEditGroupForm && $root.loggedIn"
               ng-click="$ctrl.editGroup(group)"
               class="btn btn-sm btn-outline-success pull-right cursor-pointer mr-1 mb-1">
               <span class="fa fa-save"></span>&nbsp;
               Save
             </a>
             <a class="btn btn-sm btn-outline-warning cursor-pointer pull-right mr-1 mb-1"
-              ng-if="(group.showNewClusterForm || group.showEditGroupForm) && $ctrl.loggedIn"
+              ng-if="(group.showNewClusterForm || group.showEditGroupForm) && $root.loggedIn"
               ng-click="group.showNewClusterForm = false; group.showEditGroupForm = false;">
               <span class="fa fa-ban"></span>&nbsp;
               Cancel
             </a>
-            <a ng-if="!group.showEditGroupForm && !group.showNewClusterForm && $ctrl.loggedIn"
+            <a ng-if="!group.showEditGroupForm && !group.showNewClusterForm && $root.loggedIn"
               ng-click="$ctrl.displayEditGroupForm(group)"
               class="btn btn-sm btn-outline-warning pull-right cursor-pointer mr-1 mb-1">
               <span class="fa fa-pencil"></span>&nbsp;
               Edit Group
             </a>
-            <a ng-if="!group.showNewClusterForm && group.showEditGroupForm && $ctrl.loggedIn"
+            <a ng-if="!group.showNewClusterForm && group.showEditGroupForm && $root.loggedIn"
               ng-click="$ctrl.deleteGroup(group)"
               class="btn btn-sm btn-outline-danger pull-right cursor-pointer mr-1 mb-1">
               <span class="fa fa-trash-o"></span>&nbsp;
@@ -361,14 +361,14 @@
                 title="Go to the Stats page">
                 view stats
               </a>
-              <a ng-if="!cluster.showEditClusterForm && $ctrl.loggedIn"
+              <a ng-if="!cluster.showEditClusterForm && $root.loggedIn"
                 class="btn btn-sm btn-outline-warning pull-right cursor-pointer"
                 ng-click="$ctrl.displayEditClusterForm(cluster)"
                 data-toggle="tooltip" data-placement="top"
                 title="Edit cluster">
                 <span class="fa fa-pencil"></span>
               </a>
-              <a ng-if="cluster.showEditClusterForm && $ctrl.loggedIn"
+              <a ng-if="cluster.showEditClusterForm && $root.loggedIn"
                 class="btn btn-sm btn-outline-success pull-right cursor-pointer mr-1"
                 ng-click="$ctrl.editCluster(group, cluster)"
                 data-toggle="tooltip" data-placement="top"
@@ -376,14 +376,14 @@
                 <span class="fa fa-save"></span>&nbsp;
                 Save
               </a>
-              <a ng-if="cluster.showEditClusterForm && $ctrl.loggedIn"
+              <a ng-if="cluster.showEditClusterForm && $root.loggedIn"
                 class="btn btn-sm btn-outline-warning pull-right cursor-pointer mr-1"
                 ng-click="cluster.showEditClusterForm = false;"
                 data-toggle="tooltip" data-placement="top"
                 title="Cancel">
                 <span class="fa fa-ban"></span>
               </a>
-              <a ng-if="cluster.showEditClusterForm && $ctrl.loggedIn"
+              <a ng-if="cluster.showEditClusterForm && $root.loggedIn"
                 class="btn btn-sm btn-outline-danger pull-right cursor-pointer mr-1"
                 ng-click="$ctrl.deleteCluster(group, cluster)"
                 data-toggle="tooltip" data-placement="top"
@@ -432,14 +432,14 @@
                 title="Go to the Stats page">
                 view stats
               </a>
-              <a ng-if="!cluster.showEditClusterForm && $ctrl.loggedIn"
+              <a ng-if="!cluster.showEditClusterForm && $root.loggedIn"
                 class="btn btn-sm btn-outline-warning pull-right cursor-pointer ml-1 mb-1"
                 ng-click="$ctrl.displayEditClusterForm(cluster)"
                 data-toggle="tooltip" data-placement="top"
                 title="Edit cluster">
                 <span class="fa fa-pencil"></span>
               </a>
-              <a ng-if="cluster.showEditClusterForm && $ctrl.loggedIn"
+              <a ng-if="cluster.showEditClusterForm && $root.loggedIn"
                 class="btn btn-sm btn-outline-success pull-right cursor-pointer mr-1 mb-1"
                 ng-click="$ctrl.editCluster(group, cluster)"
                 data-toggle="tooltip" data-placement="top"
@@ -447,14 +447,14 @@
                 <span class="fa fa-save"></span>&nbsp;
                 Save
               </a>
-              <a ng-if="cluster.showEditClusterForm && $ctrl.loggedIn"
+              <a ng-if="cluster.showEditClusterForm && $root.loggedIn"
                 class="btn btn-sm btn-outline-warning pull-right cursor-pointer mr-1 mb-1"
                 ng-click="cluster.showEditClusterForm = false;"
                 data-toggle="tooltip" data-placement="top"
                 title="Cancel">
                 <span class="fa fa-ban"></span>
               </a>
-              <a ng-if="cluster.showEditClusterForm && $ctrl.loggedIn"
+              <a ng-if="cluster.showEditClusterForm && $root.loggedIn"
                 class="btn btn-sm btn-outline-danger pull-right cursor-pointer ml-1 mr-1 mb-1"
                 ng-click="$ctrl.deleteCluster(group, cluster)"
                 data-toggle="tooltip" data-placement="top"
@@ -536,7 +536,7 @@
       <div ng-if="!group.clusters.length && !$ctrl.searchTerm">
         No clusters in this group.
         <a ng-click="group.showNewClusterForm = true;" href
-          ng-if="!group.showNewClusterForm && $ctrl.loggedIn"
+          ng-if="!group.showNewClusterForm && $root.loggedIn"
           class="no-decoration">Create one</a>
       </div> <!-- no clusters -->
 

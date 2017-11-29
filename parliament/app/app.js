@@ -34,8 +34,22 @@
       $locationProvider.html5Mode(true); // activate HTML5 Mode
 
       $httpProvider.defaults.withCredentials  = true;
-      $httpProvider.defaults.xsrfCookieName   = 'MOLOCH-COOKIE';
-      $httpProvider.defaults.xsrfHeaderName   = 'X-MOLOCH-COOKIE';
+      $httpProvider.interceptors.push(['$q','$rootScope', ($q, $rootScope) => {
+        return {
+          request: function(req) { // append token to headers of every request
+            const token = localStorage.token;
+            if (token) { req.headers['x-access-token'] = token; }
+            return req;
+          },
+          responseError: function(res) { // watch for token revocation
+            if (res.data && !res.data.success && res.data.tokenError) {
+              $rootScope.loggedIn = false;
+              localStorage.token  = '';
+            }
+            return $q.reject(res);
+          }
+        };
+      }]);
     }]
   )
 
