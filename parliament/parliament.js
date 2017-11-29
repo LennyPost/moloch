@@ -93,7 +93,7 @@ function verifyToken(req, res, next) {
       next();
     }
   });
-};
+}
 
 
 /* Helper functions -------------------------------------------------------- */
