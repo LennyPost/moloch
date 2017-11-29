@@ -50,10 +50,10 @@ router.use(bp.urlencoded({ extended: true }));
 // App should always have parliament data
 router.use((req, res, next) => {
   if (!parliamentWithData) {
-    return res.status(500).send(JSON.stringify({
+    return res.status(500).json({
       success : false,
       text    : 'Unable to fetch parliament data.'
-    }));
+    });
   }
 
   next();
@@ -61,55 +61,7 @@ router.use((req, res, next) => {
 
 
 /* Helper functions -------------------------------------------------------- */
-function initalizeParliament() {
-  return new Promise((resolve, reject) => {
-    for (let group of parliament.groups) {
-      group.id = groupId++;
-      if (group.clusters) {
-        for (let cluster of group.clusters) {
-          cluster.id = clusterId++;
-        }
-      }
-    }
-
-    let json = JSON.stringify(parliament);
-    fs.writeFile('parliament.json', json, 'utf8', () => {
-      return resolve();
-    }); // TODO - error?
-  });
-}
-
-function updateParliament() {
-  return new Promise((resolve, reject) => {
-
-    let promises = [];
-    for (let group of parliamentWithData.groups) {
-      if (group.clusters) {
-        for (let cluster of group.clusters) {
-          // only get health for online clusters
-          if (!cluster.disabled) {
-            promises.push(getHealth(cluster));
-          }
-          // don't get stats for multiviewers or offline clusters
-          if (!cluster.multiviewer && !cluster.disabled) {
-            promises.push(getStats(cluster));
-          }
-        }
-      }
-    }
-
-    Promise.all(promises)
-      .then(() => {
-        return resolve();
-      })
-      .catch((error) => {
-        console.error('Parliament update error:', error.messge || error);
-        return resolve();
-      });
-
-  });
-}
-
+// Retrieves the health of each cluster and updates the cluster with that info
 function getHealth(cluster) {
   return new Promise((resolve, reject) => {
 
@@ -145,6 +97,7 @@ function getHealth(cluster) {
   });
 }
 
+// Retrieves, then calculates stats for each cluster and updates the cluster with that info
 function getStats(cluster) {
   return new Promise((resolve, reject) => {
 
@@ -202,13 +155,68 @@ function getStats(cluster) {
   });
 }
 
-function sendError(req, res, status, errorText) {
-  res.status(status || 500).send(JSON.stringify({
-    success : false,
-    text    : errorText || 'Error'
-  }));
+// Initializes the parliament with ids for each group and cluster
+function initalizeParliament() {
+  return new Promise((resolve, reject) => {
+    for (let group of parliament.groups) {
+      group.id = groupId++;
+      if (group.clusters) {
+        for (let cluster of group.clusters) {
+          cluster.id = clusterId++;
+        }
+      }
+    }
+
+    let json = JSON.stringify(parliament);
+    fs.writeFile('parliament.json', json, 'utf8', () => {
+      return resolve();
+    }); // TODO - error?
+  });
 }
 
+// Chains all promises for requests for health and stats to update each cluster
+// in the parliament
+function updateParliament() {
+  return new Promise((resolve, reject) => {
+
+    let promises = [];
+    for (let group of parliamentWithData.groups) {
+      if (group.clusters) {
+        for (let cluster of group.clusters) {
+          // only get health for online clusters
+          if (!cluster.disabled) {
+            promises.push(getHealth(cluster));
+          }
+          // don't get stats for multiviewers or offline clusters
+          if (!cluster.multiviewer && !cluster.disabled) {
+            promises.push(getStats(cluster));
+          }
+        }
+      }
+    }
+
+    Promise.all(promises)
+      .then(() => {
+        return resolve();
+      })
+      .catch((error) => {
+        console.error('Parliament update error:', error.messge || error);
+        return resolve();
+      });
+
+  });
+}
+
+// Sends an error
+function sendError(req, res, status, errorText) {
+  res.status(status || 500).json({
+    success : false,
+    text    : errorText || 'Error'
+  });
+}
+
+// Writes the parliament to the parliament json file, updates the parliament
+// with health and stats, then sends success or error
 function writeParliament(req, res, successObj, errorText, sendParliament) {
   fs.writeFile('parliament.json', JSON.stringify(parliament), 'utf8', () => {
 
@@ -220,7 +228,7 @@ function writeParliament(req, res, successObj, errorText, sendParliament) {
         if (sendParliament && successObj.parliament) {
           successObj.parliament = parliamentWithData;
         }
-        return res.send(JSON.stringify(successObj));
+        return res.json(successObj);
       })
       .catch((error) => {
         return sendError(req, res, 500, errorText);
@@ -233,7 +241,7 @@ function writeParliament(req, res, successObj, errorText, sendParliament) {
 /* APIs -------------------------------------------------------------------- */
 // Get parliament with stats
 router.get('/api/parliament', (req, res) => {
-  return res.send(JSON.stringify(parliamentWithData));
+  return res.json(parliamentWithData);
 });
 
 // Create a new group in the parliament
@@ -317,7 +325,7 @@ router.post('/api/groups/:id/clusters', (req, res) => {
     multiviewer : req.body.multiviewer,
     disabled    : req.body.disabled,
     id          : clusterId++
-  }
+  };
 
   let foundGroup = false;
   for(let group of parliament.groups) {

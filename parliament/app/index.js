@@ -29,11 +29,11 @@
       this.compactMode      = false;
 
       if (localStorage) {
-        if (localStorage['refreshInterval']) {
-          this.refreshInterval = localStorage['refreshInterval'];
+        if (localStorage.refreshInterval !== undefined) {
+          this.refreshInterval = localStorage.refreshInterval;
         }
-        if (localStorage['compactMode']) {
-          this.compactMode = localStorage['compactMode'] === 'true';
+        if (localStorage.compactMode) {
+          this.compactMode = localStorage.compactMode === 'true';
         }
       }
 
@@ -133,7 +133,7 @@
       this.compactMode = !this.compactMode;
 
       if (localStorage) {
-        localStorage['compactMode'] = this.compactMode;
+        localStorage.compactMode = this.compactMode;
       }
     }
 
@@ -142,7 +142,7 @@
      */
     changeRefreshInterval() {
       if (localStorage) {
-        localStorage['refreshInterval'] = this.refreshInterval;
+        localStorage.refreshInterval = this.refreshInterval;
       }
 
       if (this.refreshInterval) {
@@ -282,7 +282,7 @@
         localUrl    : group.newClusterLocalUrl,
         multiviewer : group.newClusterMultiviewer,
         disabled    : group.newClusterDisabled
-      }
+      };
 
       let options = {
         method: 'POST',
@@ -371,7 +371,7 @@
         localUrl    : cluster.newLocalUrl,
         multiviewer : cluster.newMultiviewer,
         disabled    : cluster.newDisabled
-      }
+      };
 
       let options = {
         method: 'PUT',
