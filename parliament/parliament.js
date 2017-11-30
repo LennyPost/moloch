@@ -12,6 +12,7 @@ const rp      = require('request-promise');
 const bp      = require('body-parser');
 const logger  = require('morgan');
 const jwt     = require('jsonwebtoken');
+const bcrypt  = require('bcrypt');
 
 const app     = express();
 const router  = express.Router();
@@ -26,7 +27,11 @@ const version = 0.1;
   for (let arg of appArgs) {
     if (arg.startsWith('--port'))     { port = arg.slice(7); }
     if (arg.startsWith('--file'))     { file = arg.slice(7); }
-    if (arg.startsWith('--password')) { app.set('password', arg.slice(11)); }
+    if (arg.startsWith('--password')) {
+      bcrypt.hash(arg.slice(11), 10, (err, hash) => {
+        app.set('password', hash);
+      });
+    }
   }
 
   if (!appArgs.length) {
@@ -108,7 +113,7 @@ function verifyToken(req, res, next) {
 
   let hasAuth = !!app.get('password');
   if (!hasAuth) {
-    return tokenError(req, res, 'No password secret set.');
+    return tokenError(req, res, 'No password set.');
   }
 
   // check for token in header, url parameters, or post parameters
@@ -118,7 +123,7 @@ function verifyToken(req, res, next) {
     return tokenError(req, res, 'No token provided.');
   }
 
-  // verifies secret and checks expiration
+  // verifies token and expiration
   jwt.verify(token, app.get('password'), (err, decoded) => {
     if (err) {
       return tokenError(req, res, 'Failed to authenticate token.');
@@ -317,11 +322,11 @@ function writeParliament(req, res, successObj, errorText, sendParliament) {
 router.post('/api/authenticate', (req, res) => {
   let hasAuth = !!app.get('password');
   if (!hasAuth) {
-    return sendError(req, res, 401, 'No password secret set.');
+    return sendError(req, res, 401, 'No password set.');
   }
 
-  // check if password matches secret
-  if (app.get('password') !== req.body.password) {
+  // check if password matches
+  if (!bcrypt.compareSync(req.body.password, app.get('password'))) {
     return sendError(req, res, 401, 'Authentication failed.');
   }
 

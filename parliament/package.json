@@ -5,6 +5,7 @@
     "angular-animate": "^1.6.6",
     "angular-resource": "^1.6.6",
     "angular-route": "^1.6.6",
+    "bcrypt": "^1.0.3",
     "body-parser": "^1.18.2",
     "bootstrap": "^4.0.0-beta.2",
     "css-loader": "^0.28.7",
@@ -27,7 +28,7 @@
   "scripts": {
     "start": "node parliament.js",
     "prestart": "npm run build",
-    "dev": "node parliament.js -- --password=admin --port=8008 --file=./test/asdf.json",
+    "dev": "node parliament.js -- --password=admin --port=8008 --file=./parliament.json",
     "predev": "webpack -d --watch --display-error-details --colors &",
     "bundle:min": "webpack --define process.env.NODE_ENV=production --progress --bail",
     "lint": "jshint app parliament.js",
