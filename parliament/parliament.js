@@ -16,23 +16,52 @@ const jwt     = require('jsonwebtoken');
 const app     = express();
 const router  = express.Router();
 
+const version = 0.1;
 
-// global variables
-let port = process.env.PORT || 8008;
-let parliament = require(`${__dirname}/parliament.json`);
+/* app setup --------------------------------------------------------------- */
+(function() { // parse arguments
+  let appArgs = process.argv.slice(2);
+  let port, file;
+
+  for (let arg of appArgs) {
+    if (arg.startsWith('--port'))     { port = arg.slice(7); }
+    if (arg.startsWith('--file'))     { file = arg.slice(7); }
+    if (arg.startsWith('--password')) { app.set('password', arg.slice(11)); }
+  }
+
+  if (!appArgs.length) {
+    console.log('WARNING: No arguments, starting Parliament in view only mode with defaults.\n');
+  }
+
+  // set arguments
+  app.set('port', port || 8008);
+  app.set('file', file || './parliament.json');
+}());
+
+let parliament;
+try {
+  parliament = require(`${app.get('file')}`);
+} catch (err) {
+  parliament = { version:version, groups:[] };
+}
+
 let parliamentWithData = JSON.parse(JSON.stringify(parliament));
 let groupId = 0, clusterId = 0;
 let timeout;
 // TODO maybe store map of groups? and clusters?
 
-/* app setup --------------------------------------------------------------- */
-app.set('superSecret', process.env.SECRET); // secret variable
+app.disable('x-powered-by');
 
 // serve parliament app page
 app.set('view engine', 'pug');
 app.set('views', path.join(__dirname, 'views'));
-app.get('/', (req, res) => { res.render('app'); });
+app.get('/', (req, res) => {
+  res.render('app.pug', {
+    hasAuth: !!app.get('password')
+  });
+});
 
+// log requests
 app.use(logger('dev'));
 
 app.use(favicon(__dirname + '/public/favicon.ico'));
@@ -69,11 +98,17 @@ router.use((req, res, next) => {
 // Verify token
 function verifyToken(req, res, next) {
   function tokenError(req, res, errorText) {
+    errorText = errorText || 'Token Error!';
     res.status(403).json({
       tokenError: true,
       success   : false,
-      text      : errorText || 'Token Error!'
+      text      : `Permission Denied: ${errorText}`
     });
+  }
+
+  let hasAuth = !!app.get('password');
+  if (!hasAuth) {
+    return tokenError(req, res, 'No password secret set.');
   }
 
   // check for token in header, url parameters, or post parameters
@@ -84,7 +119,7 @@ function verifyToken(req, res, next) {
   }
 
   // verifies secret and checks expiration
-  jwt.verify(token, app.get('superSecret'), (err, decoded) => {
+  jwt.verify(token, app.get('password'), (err, decoded) => {
     if (err) {
       return tokenError(req, res, 'Failed to authenticate token.');
     } else {
@@ -194,6 +229,8 @@ function getStats(cluster) {
 // Initializes the parliament with ids for each group and cluster
 function initalizeParliament() {
   return new Promise((resolve, reject) => {
+    if (!parliament.groups) { parliament.groups = []; }
+
     for (let group of parliament.groups) {
       group.id = groupId++;
       if (group.clusters) {
@@ -204,7 +241,8 @@ function initalizeParliament() {
     }
 
     let json = JSON.stringify(parliament);
-    fs.writeFile('parliament.json', json, 'utf8', () => {
+    fs.writeFile(app.get('file'), json, 'utf8', () => {
+      parliamentWithData = JSON.parse(JSON.stringify(parliament));
       return resolve();
     }); // TODO - error?
   });
@@ -254,7 +292,7 @@ function sendError(req, res, status, errorText) {
 // Writes the parliament to the parliament json file, updates the parliament
 // with health and stats, then sends success or error
 function writeParliament(req, res, successObj, errorText, sendParliament) {
-  fs.writeFile('parliament.json', JSON.stringify(parliament), 'utf8', () => {
+  fs.writeFile(app.get('file'), JSON.stringify(parliament), 'utf8', () => {
 
     parliamentWithData = JSON.parse(JSON.stringify(parliament));
 
@@ -277,14 +315,19 @@ function writeParliament(req, res, successObj, errorText, sendParliament) {
 /* APIs -------------------------------------------------------------------- */
 // Authenticate user
 router.post('/api/authenticate', (req, res) => {
+  let hasAuth = !!app.get('password');
+  if (!hasAuth) {
+    return sendError(req, res, 401, 'No password secret set.');
+  }
+
   // check if password matches secret
-  if (app.get('superSecret') !== req.body.password) {
+  if (app.get('password') !== req.body.password) {
     return sendError(req, res, 401, 'Authentication failed.');
   }
 
   const payload = { admin:true };
 
-  let token = jwt.sign(payload, app.get('superSecret'), {
+  let token = jwt.sign(payload, app.get('password'), {
     expiresIn: 60*60*24 // expires in 24 hours
   });
 
@@ -469,7 +512,8 @@ router.put('/api/groups/:groupId/clusters/:clusterId', verifyToken, (req, res) =
 
 
 /* LISTEN! ----------------------------------------------------------------- */
-let server = app.listen(port, () => {
+
+let server = app.listen(app.get('port'), () => {
   let host = server.address().address;
   let port = server.address().port;
 

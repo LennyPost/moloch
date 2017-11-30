@@ -14,3 +14,8 @@ html(ng-app="parliament", lang="en")
 
     script(src='vendor.bundle.js')
     script(src='app.bundle.js')
+    script.
+      angular.module('parliament.Constants', [])
+         .constant('Constants', Object.freeze({
+           hasAuth: #{hasAuth}
+         }));

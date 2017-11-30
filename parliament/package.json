@@ -26,8 +26,9 @@
   },
   "scripts": {
     "start": "node parliament.js",
-    "dev": "node parliament.js & webpack -d --watch --display-error-details",
-    "prestart": "npm run bundle:min",
+    "prestart": "npm run build",
+    "dev": "node parliament.js -- --password=admin --port=8008 --file=./test/asdf.json",
+    "predev": "webpack -d --watch --display-error-details --colors &",
     "bundle:min": "webpack --define process.env.NODE_ENV=production --progress --bail",
     "lint": "jshint app parliament.js",
     "build": "npm run bundle:min"

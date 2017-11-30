@@ -18,10 +18,11 @@
      *
      * @ngInject
      */
-    constructor($http, $interval, $rootScope) {
+    constructor($http, $interval, $rootScope, Constants) {
       this.$http      = $http;
       this.$interval  = $interval;
       this.$rootScope = $rootScope;
+      this.hasAuth    = Constants.hasAuth;
     }
 
     /* Callback when component is mounted and ready */
@@ -425,7 +426,7 @@
 
   }
 
-  ParliamentController.$inject = ['$http','$interval','$rootScope'];
+  ParliamentController.$inject = ['$http','$interval','$rootScope','Constants'];
 
 
   angular.module('parliament')

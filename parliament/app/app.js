@@ -16,7 +16,9 @@
    */
   angular.module('parliament', [
     // angular dependencies
-    'ngResource', 'ngRoute', 'ngAnimate'
+    'ngResource', 'ngRoute', 'ngAnimate',
+    // ui constants
+    'parliament.Constants'
   ])
 
   .config(['$routeProvider','$locationProvider','$httpProvider',
