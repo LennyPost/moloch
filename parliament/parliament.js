@@ -82,7 +82,7 @@ app.use('/app.bundle.js', express.static(`${__dirname}/bundle/app.bundle.js`, { 
 app.use('/vendor.bundle.js', express.static(`${__dirname}/bundle/vendor.bundle.js`, { maxAge:600*1000 }));
 
 // define router to mount api related functions
-app.use('/', router);
+app.use('/api', router);
 router.use(bp.json());
 router.use(bp.urlencoded({ extended: true }));
 
@@ -319,7 +319,7 @@ function writeParliament(req, res, successObj, errorText, sendParliament) {
 
 /* APIs -------------------------------------------------------------------- */
 // Authenticate user
-router.post('/api/authenticate', (req, res) => {
+router.post('/authenticate', (req, res) => {
   let hasAuth = !!app.get('password');
   if (!hasAuth) {
     return sendError(req, res, 401, 'No password set.');
@@ -344,12 +344,12 @@ router.post('/api/authenticate', (req, res) => {
 });
 
 // Get parliament with stats
-router.get('/api/parliament', (req, res) => {
+router.get('/parliament', (req, res) => {
   return res.json(parliamentWithData);
 });
 
 // Create a new group in the parliament
-router.post('/api/groups', verifyToken, (req, res) => {
+router.post('/groups', verifyToken, (req, res) => {
   if (!req.body.title) {
     return sendError(req, res, 422, 'A group must have a title.');
   }
@@ -365,7 +365,7 @@ router.post('/api/groups', verifyToken, (req, res) => {
 });
 
 // Delete a group in the parliament
-router.delete('/api/groups/:id', verifyToken, (req, res) => {
+router.delete('/groups/:id', verifyToken, (req, res) => {
   let foundGroup = false, index = 0;
   for(let group of parliament.groups) {
     if (group.id === parseInt(req.params.id)) {
@@ -386,7 +386,7 @@ router.delete('/api/groups/:id', verifyToken, (req, res) => {
 });
 
 // Update a group in the parliament
-router.put('/api/groups/:id', verifyToken, (req, res) => {
+router.put('/groups/:id', verifyToken, (req, res) => {
   if (!req.body.title) {
     return sendError(req, res, 422, 'A group must have a title.');
   }
@@ -413,7 +413,7 @@ router.put('/api/groups/:id', verifyToken, (req, res) => {
 });
 
 // Create a new cluster within an existing group
-router.post('/api/groups/:id/clusters', verifyToken, (req, res) => {
+router.post('/groups/:id/clusters', verifyToken, (req, res) => {
   if (!req.body.title) {
     return sendError(req, res, 422, 'A cluster must have a title.');
   }
@@ -455,7 +455,7 @@ router.post('/api/groups/:id/clusters', verifyToken, (req, res) => {
 });
 
 // Delete a cluster
-router.delete('/api/groups/:groupId/clusters/:clusterId', verifyToken, (req, res) => {
+router.delete('/groups/:groupId/clusters/:clusterId', verifyToken, (req, res) => {
   let foundCluster = false, clusterIndex = 0;
   for(let group of parliament.groups) {
     if (group.id === parseInt(req.params.groupId)) {
@@ -480,7 +480,7 @@ router.delete('/api/groups/:groupId/clusters/:clusterId', verifyToken, (req, res
 });
 
 // Update a cluster
-router.put('/api/groups/:groupId/clusters/:clusterId', verifyToken, (req, res) => {
+router.put('/groups/:groupId/clusters/:clusterId', verifyToken, (req, res) => {
   if (!req.body.title) {
     return sendError(req, res, 422, 'A cluster must have a title.');
   }
