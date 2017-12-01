@@ -308,7 +308,7 @@ function updateParliament() {
 
 // Writes the parliament to the parliament json file, updates the parliament
 // with health and stats, then sends success or error
-function writeParliament(req, res, successObj, errorText, sendParliament) {
+function writeParliament(req, res, next, successObj, errorText, sendParliament) {
   fs.writeFile(app.get('file'), JSON.stringify(parliament), 'utf8', () => {
 
     parliamentWithData = JSON.parse(JSON.stringify(parliament));
@@ -381,7 +381,7 @@ router.post('/groups', verifyToken, (req, res, next) => {
 
   let successObj  = { success:true, group:newGroup, text: 'Successfully added new group.' };
   let errorText   = 'Unable to add that group to your parliament.';
-  writeParliament(req, res, successObj, errorText);
+  writeParliament(req, res, next, successObj, errorText);
 });
 
 // Delete a group in the parliament
@@ -404,7 +404,7 @@ router.delete('/groups/:id', verifyToken, (req, res, next) => {
 
   let successObj  = { success:true, text:'Successfully removed the requested group.' };
   let errorText   = 'Unable to remove that group from the parliament.';
-  writeParliament(req, res, successObj, errorText);
+  writeParliament(req, res, next, successObj, errorText);
 });
 
 // Update a group in the parliament
@@ -435,7 +435,7 @@ router.put('/groups/:id', verifyToken, (req, res, next) => {
 
   let successObj  = { success:true, text:'Successfully updated the requested group.' };
   let errorText   = 'Unable to update that group in the parliament.';
-  writeParliament(req, res, successObj, errorText);
+  writeParliament(req, res, next, successObj, errorText);
 });
 
 // Create a new cluster within an existing group
@@ -481,7 +481,7 @@ router.post('/groups/:id/clusters', verifyToken, (req, res, next) => {
     text      : 'Successfully added the requested cluster.'
   };
   let errorText   = 'Unable to add that cluster to the parliament.';
-  writeParliament(req, res, successObj, errorText, true);
+  writeParliament(req, res, next, successObj, errorText, true);
 });
 
 // Delete a cluster
@@ -508,7 +508,7 @@ router.delete('/groups/:groupId/clusters/:clusterId', verifyToken, (req, res, ne
 
   let successObj  = { success:true, text: 'Successfully removed the requested cluster.' };
   let errorText   = 'Unable to remove that cluster from your parliament.';
-  writeParliament(req, res, successObj, errorText);
+  writeParliament(req, res, next, successObj, errorText);
 });
 
 // Update a cluster
@@ -548,7 +548,7 @@ router.put('/groups/:groupId/clusters/:clusterId', verifyToken, (req, res, next)
 
   let successObj  = { success:true, text: 'Successfully updated the requested cluster.' };
   let errorText   = 'Unable to update that cluster in your parliament.';
-  writeParliament(req, res, successObj, errorText);
+  writeParliament(req, res, next, successObj, errorText);
 });
 
 
