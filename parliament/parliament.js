@@ -17,7 +17,7 @@ const bcrypt  = require('bcrypt');
 const app     = express();
 const router  = express.Router();
 
-const version = 0.1;
+const version = 1;
 
 /* app setup --------------------------------------------------------------- */
 (function() { // parse arguments
@@ -27,6 +27,8 @@ const version = 0.1;
   for (let arg of appArgs) {
     if (arg.startsWith('--port'))     { port = arg.slice(7); }
     if (arg.startsWith('--file'))     { file = arg.slice(7); }
+    if (arg.startsWith('--keyFile'))  { app.set('keyFile', arg.slice(9)); }
+    if (arg.startsWith('--certFile')) { app.set('certFile', arg.slice(10)); }
     if (arg.startsWith('--password')) {
       bcrypt.hash(arg.slice(11), 10, (err, hash) => {
         app.set('password', hash);
@@ -517,17 +519,31 @@ router.put('/groups/:groupId/clusters/:clusterId', verifyToken, (req, res) => {
 
 
 /* LISTEN! ----------------------------------------------------------------- */
+let server;
+if (app.get('keyFile') && app.get('certFile')) {
+  const certOptions = {
+    key : fs.readFileSync(app.get('keyFile')),
+    cert: fs.readFileSync(app.get('certFile'))
+  }
+  server = https.createServer(certOptions, app);
+} else {
+  server = http.createServer(app);
+}
 
-let server = app.listen(app.get('port'), () => {
-  let host = server.address().address;
-  let port = server.address().port;
+server
+  .on('error', function (e) {
+    console.log(`ERROR - couldn't listen on port ${app.get('port')}, is Parliament already running?`);
+    process.exit(1);
+    throw new Error('Exiting');
+  })
+  .on('listening', function (e) {
+    console.log(`Express server listening on port ${server.address().port} in ${app.settings.env} mode`);
+  })
+  .listen(app.get('port'), () => {
+    initalizeParliament()
+      .then(() => { updateParliament(); });
 
-  console.log('App listening at http://%s:%s', host, port);
-
-  initalizeParliament()
-    .then(() => { updateParliament(); });
-
-  timeout = setInterval(() => {
-    updateParliament();
-  }, 10000);
-});
+    timeout = setInterval(() => {
+      updateParliament();
+    }, 10000);
+  });

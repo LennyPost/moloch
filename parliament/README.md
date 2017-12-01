@@ -26,15 +26,22 @@ You should find that you have a new folder:
 #### Production
 To start the app for production, simply run:
 ```
-npm start -- --password=somepassword --port=8765 --file=./absolute/file/path
+npm start -- --password=somepassword --port=8765 --file=./absolute/path/to/parliament.json --keyFile=./absolute/path/to/keyFile.pem --certFile=./absolute/path/to/certFile.pem
 ```
-This command starts the app, passing in the password, port, and file location, and bundles the application files into `viewer/bundles/app.bundle.js` and `viewer/bundles/vendor.bundle.js`.
+This command starts the app, passing in the password, port, and file location, and bundles the application files into `parliament/bundles/app.bundle.js` and `parliament/bundles/vendor.bundle.js`.
 
-* `--password` defines the password that you will use to login to update the parliament. **Defaults to 'admin'**.
-* `--port` defines the port that the web app with be listening on. **Defaults to 8008**.
-* `--file` defines the absolute path to the JSON file containing your parliament information. **Defaults to './parliament.json'**.
+**The parameters are defined as follows:**
+Parameter | Default | Description
+--------- | ------- | -----------
+password  | EMPTY   | Password will be used to login to update the parliament. If it is not set, the app runs in read only mode.
+port      | 8008    | Port for the web app to listen on.
+file      | ./parliament.json | Absolute path to the JSON file to store your parliament information.
+keyFile   | EMPTY   | Private certificate to use for https, if not set then http will be used. **certfile** must also be set.
+certFile  | EMPTY   | Public certificate to use for https, if not set then http will be used. **keyFile** must also be set.
 
-_Note: if you do not pass in the password, port, or file arguments, the defaults are used._
+_**Important**: the leading `--`, before the parameters is essential. As are the leading `--` before each parameter._
+
+_Note: if you do not pass in the port or file arguments, the defaults are used._
 
 Now browse to the app at `http://localhost:8765`, or whichever port you passed into the `npm start` command.
 
@@ -48,7 +55,7 @@ To start the app for development and testing, simply run:
 npm run dev
 ```
 
-This command starts the app with the necessary flags set (`--password=admin --port=8008 --file=./parliament.json`) and bundles the application files into `viewer/bundles/app.bundle.js` and `viewer/bundles/vendor.bundle.js`.
+This command starts the app with the necessary flags set (`--password=admin --port=8008 --file=./parliament.dev.json`) and bundles the application files into `parliament/bundles/app.bundle.js` and `parliament/bundles/vendor.bundle.js`.
 
 Webpack watches for changes to relevant files, and re-bundles the app after each save.
 
