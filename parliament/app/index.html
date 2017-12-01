@@ -122,7 +122,7 @@
     </div>
 
     <!-- group -->
-    <div ng-repeat="group in $ctrl.parliament.groups" class="mb-4">
+    <div ng-repeat="group in $ctrl.parliament.groups track by group.id" class="mb-4">
 
       <!-- group title -->
       <div class="row" ng-if="group.filteredClusters.length > 0 || (!group.clusters.length && !$ctrl.searchTerm)">
@@ -266,7 +266,7 @@
       <!-- clusters -->
       <!-- compact style -->
       <ul class="cluster-group d-flex flex-wrap row mb-4" ng-if="$ctrl.compactMode">
-        <li ng-repeat="cluster in group.filteredClusters = (group.clusters | filter:{title:$ctrl.searchTerm}) track by $index"
+        <li ng-repeat="cluster in group.filteredClusters = (group.clusters | filter:{title:$ctrl.searchTerm}) track by cluster.id"
           class="cluster col-sm-12 col-md-6 col-lg-4 col-xl-3 mb-2 animate-opacity">
           <div class="card bg-light">
             <div class="card-body">
@@ -396,7 +396,7 @@
       </ul> <!-- /compact style -->
       <!-- expanded style -->
       <ul class="list-group" class="row" ng-if="!$ctrl.compactMode">
-        <li ng-repeat="cluster in group.filteredClusters = (group.clusters | filter:{title:$ctrl.searchTerm}) track by $index"
+        <li ng-repeat="cluster in group.filteredClusters = (group.clusters | filter:{title:$ctrl.searchTerm}) track by cluster.id"
           class="list-group-item list-group-item-action flex-column align-items-start animate-opacity"
           ng-class="{'list-group-item-light':cluster.disabled}">
           <div class="d-flex w-100 justify-content-between">
