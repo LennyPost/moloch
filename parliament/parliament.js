@@ -24,15 +24,22 @@ const version = 1;
   let appArgs = process.argv.slice(2);
   let port, file;
 
+  function setPasswordHash(err, hash) {
+    if (err) {
+      console.error(`Error hashing password: ${err}`);
+      return;
+    }
+
+    app.set('password', hash);
+  }
+
   for (let arg of appArgs) {
     if (arg.startsWith('--port'))     { port = arg.slice(7); }
     if (arg.startsWith('--file'))     { file = arg.slice(7); }
     if (arg.startsWith('--keyFile'))  { app.set('keyFile', arg.slice(9)); }
     if (arg.startsWith('--certFile')) { app.set('certFile', arg.slice(10)); }
     if (arg.startsWith('--password')) {
-      bcrypt.hash(arg.slice(11), 10, (err, hash) => {
-        app.set('password', hash);
-      });
+      bcrypt.hash(arg.slice(11), 10, setPasswordHash);
     }
   }
 
@@ -524,7 +531,7 @@ if (app.get('keyFile') && app.get('certFile')) {
   const certOptions = {
     key : fs.readFileSync(app.get('keyFile')),
     cert: fs.readFileSync(app.get('certFile'))
-  }
+  };
   server = https.createServer(certOptions, app);
 } else {
   server = http.createServer(app);
