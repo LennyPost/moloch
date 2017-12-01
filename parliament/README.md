@@ -31,13 +31,14 @@ npm start -- --password=somepassword --port=8765 --file=./absolute/path/to/parli
 This command starts the app, passing in the password, port, and file location, and bundles the application files into `parliament/bundles/app.bundle.js` and `parliament/bundles/vendor.bundle.js`.
 
 **The parameters are defined as follows:**
-Parameter | Default | Description
---------- | ------- | -----------
-password  | EMPTY   | Password will be used to login to update the parliament. If it is not set, the app runs in read only mode.
-port      | 8008    | Port for the web app to listen on.
-file      | ./parliament.json | Absolute path to the JSON file to store your parliament information.
-keyFile   | EMPTY   | Private certificate to use for https, if not set then http will be used. **certfile** must also be set.
-certFile  | EMPTY   | Public certificate to use for https, if not set then http will be used. **keyFile** must also be set.
+
+| Parameter | Default | Description |
+| --------- | ------- | ----------- |
+| password  | EMPTY   | Password will be used to login to update the parliament. If it is not set, the app runs in read only mode. |
+| port      | 8008    | Port for the web app to listen on. |
+| file      | ./parliament.json | Absolute path to the JSON file to store your parliament information. |
+| keyFile   | EMPTY   | Private certificate to use for https, if not set then http will be used. **certfile** must also be set. |
+| certFile  | EMPTY   | Public certificate to use for https, if not set then http will be used. **keyFile** must also be set. |
 
 _**Important**: the leading `--`, before the parameters is essential. As are the leading `--` before each parameter._
 
