@@ -36,8 +36,8 @@ const version = 1;
   for (let arg of appArgs) {
     if (arg.startsWith('--port'))     { port = arg.slice(7); }
     if (arg.startsWith('--file'))     { file = arg.slice(7); }
-    if (arg.startsWith('--keyFile'))  { app.set('keyFile', arg.slice(9)); }
-    if (arg.startsWith('--certFile')) { app.set('certFile', arg.slice(10)); }
+    if (arg.startsWith('--keyFile'))  { app.set('keyFile', arg.slice(10)); }
+    if (arg.startsWith('--certFile')) { app.set('certFile', arg.slice(11)); }
     if (arg.startsWith('--password')) {
       bcrypt.hash(arg.slice(11), 10, setPasswordHash);
     }
@@ -52,6 +52,7 @@ const version = 1;
   app.set('file', file || './parliament.json');
 }());
 
+// get the parliament file or create it if it doesn't exist
 let parliament;
 try {
   parliament = require(`${app.get('file')}`);
@@ -59,10 +60,12 @@ try {
   parliament = { version:version, groups:[] };
 }
 
+// clone the parliament to add stats and health to it
 let parliamentWithData = JSON.parse(JSON.stringify(parliament));
+// define ids for groups and clusters
 let groupId = 0, clusterId = 0;
+// create timeout for updating the parliament data on an interval
 let timeout;
-// TODO maybe store map of groups? and clusters?
 
 app.disable('x-powered-by');
 
@@ -100,13 +103,21 @@ router.use(bp.urlencoded({ extended: true }));
 // App should always have parliament data
 router.use((req, res, next) => {
   if (!parliamentWithData) {
-    return res.status(500).json({
-      success : false,
-      text    : 'Unable to fetch parliament data.'
-    });
+    const error = new Error('Unable to fetch parliament data.');
+    error.httpStatusCode = 500;
+    return next(error);
   }
 
   next();
+});
+
+// Handle errors
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(err.httpStatusCode || 500).json({
+    success : false,
+    text    : err.message || 'Error'
+  });
 });
 
 // Verify token
@@ -295,14 +306,6 @@ function updateParliament() {
   });
 }
 
-// Sends an error
-function sendError(req, res, status, errorText) {
-  res.status(status || 500).json({
-    success : false,
-    text    : errorText || 'Error'
-  });
-}
-
 // Writes the parliament to the parliament json file, updates the parliament
 // with health and stats, then sends success or error
 function writeParliament(req, res, successObj, errorText, sendParliament) {
@@ -318,8 +321,10 @@ function writeParliament(req, res, successObj, errorText, sendParliament) {
         }
         return res.json(successObj);
       })
-      .catch((error) => {
-        return sendError(req, res, 500, errorText);
+      .catch((err) => {
+        const error = new Error(errorText || 'Error updating parliament.');
+        error.httpStatusCode = 500;
+        return next(error);
       });
 
   }); // TODO - handle error with json file writing
@@ -328,15 +333,19 @@ function writeParliament(req, res, successObj, errorText, sendParliament) {
 
 /* APIs -------------------------------------------------------------------- */
 // Authenticate user
-router.post('/authenticate', (req, res) => {
+router.post('/authenticate', (req, res, next) => {
   let hasAuth = !!app.get('password');
   if (!hasAuth) {
-    return sendError(req, res, 401, 'No password set.');
+    const error = new Error('No password set.');
+    error.httpStatusCode = 401;
+    return next(error);
   }
 
   // check if password matches
   if (!bcrypt.compareSync(req.body.password, app.get('password'))) {
-    return sendError(req, res, 401, 'Authentication failed.');
+    const error = new Error('Authentication failed.');
+    error.httpStatusCode = 401;
+    return next(error);
   }
 
   const payload = { admin:true };
@@ -353,14 +362,16 @@ router.post('/authenticate', (req, res) => {
 });
 
 // Get parliament with stats
-router.get('/parliament', (req, res) => {
+router.get('/parliament', (req, res, next) => {
   return res.json(parliamentWithData);
 });
 
 // Create a new group in the parliament
-router.post('/groups', verifyToken, (req, res) => {
+router.post('/groups', verifyToken, (req, res, next) => {
   if (!req.body.title) {
-    return sendError(req, res, 422, 'A group must have a title.');
+    const error = new Error('A group must have a title');
+    error.httpStatusCode = 422;
+    return next(error);
   }
 
   let newGroup = { title:req.body.title, id:groupId++, clusters:[] };
@@ -374,7 +385,7 @@ router.post('/groups', verifyToken, (req, res) => {
 });
 
 // Delete a group in the parliament
-router.delete('/groups/:id', verifyToken, (req, res) => {
+router.delete('/groups/:id', verifyToken, (req, res, next) => {
   let foundGroup = false, index = 0;
   for(let group of parliament.groups) {
     if (group.id === parseInt(req.params.id)) {
@@ -386,7 +397,9 @@ router.delete('/groups/:id', verifyToken, (req, res) => {
   }
 
   if (!foundGroup) {
-    return sendError(req, res, 500, 'Unable to find group to delete.');
+    const error = new Error('Unable to find group to delete.');
+    error.httpStatusCode = 500;
+    return next(error);
   }
 
   let successObj  = { success:true, text:'Successfully removed the requested group.' };
@@ -395,9 +408,11 @@ router.delete('/groups/:id', verifyToken, (req, res) => {
 });
 
 // Update a group in the parliament
-router.put('/groups/:id', verifyToken, (req, res) => {
+router.put('/groups/:id', verifyToken, (req, res, next) => {
   if (!req.body.title) {
-    return sendError(req, res, 422, 'A group must have a title.');
+    const error = new Error('A group must have a title.');
+    error.httpStatusCode = 422;
+    return next(error);
   }
 
   let foundGroup = false;
@@ -413,7 +428,9 @@ router.put('/groups/:id', verifyToken, (req, res) => {
   }
 
   if (!foundGroup) {
-    return sendError(req, res, 500, 'Unable to find group to edit.');
+    const error = new Error('Unable to find group to edit.');
+    error.httpStatusCode = 500;
+    return next(error);
   }
 
   let successObj  = { success:true, text:'Successfully updated the requested group.' };
@@ -422,12 +439,14 @@ router.put('/groups/:id', verifyToken, (req, res) => {
 });
 
 // Create a new cluster within an existing group
-router.post('/groups/:id/clusters', verifyToken, (req, res) => {
-  if (!req.body.title) {
-    return sendError(req, res, 422, 'A cluster must have a title.');
-  }
-  if (!req.body.url) {
-    return sendError(req, res, 422, 'A cluster must have a url.');
+router.post('/groups/:id/clusters', verifyToken, (req, res, next) => {
+  if (!req.body.title || !req.body.url) {
+    let message;
+    if (!req.body.title) { message = 'A cluster must have a title.'; }
+    else if (!req.body.url) { message = 'A cluster must have a url.'; }
+    const error = new Error(message);
+    error.httpStatusCode = 422;
+    return next(error);
   }
 
   let newCluster = {
@@ -450,7 +469,9 @@ router.post('/groups/:id/clusters', verifyToken, (req, res) => {
   }
 
   if (!foundGroup) {
-    return sendError(req, res, 500, 'Unable to find group to place cluster.');
+    const error = new Error('Unable to find group to place cluster.');
+    error.httpStatusCode = 500;
+    return next(error);
   }
 
   let successObj  = {
@@ -464,7 +485,7 @@ router.post('/groups/:id/clusters', verifyToken, (req, res) => {
 });
 
 // Delete a cluster
-router.delete('/groups/:groupId/clusters/:clusterId', verifyToken, (req, res) => {
+router.delete('/groups/:groupId/clusters/:clusterId', verifyToken, (req, res, next) => {
   let foundCluster = false, clusterIndex = 0;
   for(let group of parliament.groups) {
     if (group.id === parseInt(req.params.groupId)) {
@@ -480,7 +501,9 @@ router.delete('/groups/:groupId/clusters/:clusterId', verifyToken, (req, res) =>
   }
 
   if (!foundCluster) {
-    return sendError(req, res, 500, 'Unable to find cluster to delete.');
+    const error = new Error('Unable to find cluster to delete.');
+    error.httpStatusCode = 500;
+    return next(error);
   }
 
   let successObj  = { success:true, text: 'Successfully removed the requested cluster.' };
@@ -489,12 +512,14 @@ router.delete('/groups/:groupId/clusters/:clusterId', verifyToken, (req, res) =>
 });
 
 // Update a cluster
-router.put('/groups/:groupId/clusters/:clusterId', verifyToken, (req, res) => {
-  if (!req.body.title) {
-    return sendError(req, res, 422, 'A cluster must have a title.');
-  }
-  if (!req.body.url) {
-    return sendError(req, res, 422, 'A cluster must have a url.');
+router.put('/groups/:groupId/clusters/:clusterId', verifyToken, (req, res, next) => {
+  if (!req.body.title || !req.body.url) {
+    let message;
+    if (!req.body.title) { message = 'A cluster must have a title.'; }
+    else if (!req.body.url) { message = 'A cluster must have a url.'; }
+    const error = new Error(message);
+    error.httpStatusCode = 422;
+    return next(error);
   }
 
   let foundCluster = false;
@@ -516,7 +541,9 @@ router.put('/groups/:groupId/clusters/:clusterId', verifyToken, (req, res) => {
   }
 
   if (!foundCluster) {
-    return sendError(req, res, 500, 'Unable to find cluster to update.');
+    const error = new Error('Unable to find cluster to update.');
+    error.httpStatusCode = 500;
+    return next(error);
   }
 
   let successObj  = { success:true, text: 'Successfully updated the requested cluster.' };
