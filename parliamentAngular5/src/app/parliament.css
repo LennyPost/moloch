@@ -1,0 +1,94 @@
+@import "~font-awesome/css/font-awesome.css";
+@import "~bootstrap/dist/css/bootstrap.css";
+
+/* parliament page styles */
+
+/* general styles -------------------------------------- */
+html, body { background-color: #f0f0f0; }
+
+.cursor-pointer { cursor: pointer; }
+.pointer-cursor { cursor: pointer; }
+.cursor-help    { cursor: help; }
+.help-cursor    { cursor: help; }
+
+.no-decoration  { text-decoration: none !important; }
+
+.text-muted-more{ color: #dddddd; }
+
+/* refresh interval select box */
+.refresh-interval-control { -webkit-appearance: none; }
+
+/* cluster styles */
+.cluster-group {
+  list-style: none;
+  padding: 0;
+  margin-left: 0;
+  margin-right: 0;
+}
+.cluster-group .cluster {
+  padding-left: 2px;
+  padding-right: 2px;
+}
+.cluster-group .card {
+  height:100%;
+  box-shadow: 0 20px 40px -14px rgba(0,0,0,0.25);
+}
+.cluster-group .card .card-body {
+  padding: 0.75rem;
+}
+.cluster-group .card .card-body hr {
+  margin-top: 0;
+  margin-bottom: .25rem;
+}
+.cluster-group .card .card-footer {
+  padding: 0.5rem 0.75rem;
+}
+
+/* compact form for editing clusters */
+form.edit-cluster label {
+  margin:0;
+}
+form.edit-cluster .form-group {
+  margin-bottom: .25rem;
+}
+
+/* animations */
+.hide-login, .show-login {
+  transition: width 0.5s cubic-bezier(0.250, 0.460, 0.450, 0.940),
+              opacity 0.2s cubic-bezier(0.250, 0.460, 0.450, 0.940);
+}
+.show-login {
+  width: 250px;
+}
+.hide-login {
+  width: 0px;
+  opacity: 0;
+}
+
+.animate-opacity { opacity: 1; }
+
+.animate-opacity.ng-enter {
+  -webkit-transition: opacity 400ms linear;
+  transition        : opacity 400ms linear;
+  opacity           : 0;
+}
+
+.animate-opacity.ng-enter-active {
+  opacity           : 1;
+}
+
+.animate-opacity.ng-leave {
+  -webkit-transition: opacity 400ms linear;
+  transition        : opacity 400ms linear;
+  opacity           : 1;
+}
+
+.animate-opacity.ng-leave-active {
+  opacity           : 0;
+}
+
+/* TODO - hack to disable ng-animate that is causing slow ng-ifs */
+.btn.ng-animate { transition:0s none;
+       -webkit-transition:0s none;
+       animation: 0s none;
+       -webkit-animation: 0s none; }
