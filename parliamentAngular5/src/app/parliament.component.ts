@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+
 import { TimerObservable } from "rxjs/observable/TimerObservable";
 
 import { AuthService } from './auth.service';
@@ -9,9 +10,9 @@ import { Auth, Login } from './auth';
   selector    : 'app-root',
   templateUrl : './parliament.html',
   styleUrls   : [ './parliament.css' ],
-  providers   : [ AuthService, ParliamentService ]
+  providers   : [ ParliamentService ]
 })
-export class ParliamentComponent implements OnInit{
+export class ParliamentComponent implements OnInit {
 
   /* setup --------------------------------------------------------------- */
   private sub;
@@ -33,7 +34,11 @@ export class ParliamentComponent implements OnInit{
   constructor(
     private parliamentService: ParliamentService,
     private authService: AuthService
-  ) {}
+  ) {
+    authService.loggedIn$.subscribe((loggedIn) => {
+      this.loggedIn = loggedIn;
+    });
+  }
 
   ngOnInit() {
     this.authService.hasAuth()
@@ -51,7 +56,6 @@ export class ParliamentComponent implements OnInit{
 
     if (this.refreshInterval) { this.startAutoRefresh(); }
   }
-
 
   /* controller functions ------------------------------------------------ */
   /**
@@ -148,7 +152,7 @@ export class ParliamentComponent implements OnInit{
             this.loggedIn = this.authService.saveToken(data.token);
           },
           (err) => {
-            console.log('login error:', err);
+            console.error('login error:', err);
             this.password = '';
             this.loggedIn = false;
             this.error    = err.error.text || 'Unable to login';

@@ -6,13 +6,14 @@ import { FormsModule } from '@angular/forms';
 
 import { ParliamentComponent } from './parliament.component';
 import { TokenInterceptor } from './token.interceptor';
+import { AuthService } from './auth.service';
 
 
 @NgModule({
   declarations: [ ParliamentComponent ],
   imports     : [ BrowserModule, HttpClientModule, FormsModule ],
   bootstrap   : [ ParliamentComponent ],
-  providers   : [{
+  providers   : [ AuthService, {
     provide   : HTTP_INTERCEPTORS,
     useClass  : TokenInterceptor,
     multi     : true
