@@ -128,7 +128,7 @@
     </div> <!-- /new group form -->
 
     <!-- groups -->
-    <div *ngFor="let group of parliament.groups" class="mb-4">
+    <div *ngFor="let group of parliament.groups; trackBy:getTrackingId" class="mb-4">
 
       <!-- group title/description -->
       <div class="row" *ngIf="group.filteredClusters.length > 0 || (!group.clusters.length && !searchTerm)">
@@ -288,7 +288,7 @@
 
       <!-- clusters -->
       <ul class="cluster-group d-flex flex-wrap row mb-4">
-        <li *ngFor="let cluster of group.filteredClusters"
+        <li *ngFor="let cluster of group.filteredClusters; trackBy:getTrackingId"
           class="cluster col-sm-12 col-md-6 col-lg-4 col-xl-3 mb-2 animate-opacity">
           <div class="card bg-light">
             <div class="card-body">
@@ -317,14 +317,14 @@
               </div>
               <hr>
               <p class="text-muted small mb-2">{{cluster.description}}</p>
-              <!-- <small *ngIf="!cluster.disabled">
+              <small *ngIf="!cluster.disabled">
                 <div *ngIf="!cluster.multiviewer && !cluster.statsError">
                   <strong>{{cluster.deltaBPS || 0 | commaString}}</strong>
                   Bytes/Sec<br>
                   <strong>{{cluster.deltaTDPS || 0 | commaString}}</strong>
                   Packet Drops/Sec
                 </div>
-              </small> -->
+              </small>
               <div class="alert alert-danger alert-sm" *ngIf="cluster.error">
                 <span class="fa fa-exclamation-triangle"></span>&nbsp;
                 {{cluster.error}}

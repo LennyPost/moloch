@@ -4,6 +4,7 @@ import { TimerObservable } from "rxjs/observable/TimerObservable";
 
 import { AuthService } from './auth.service';
 import { ParliamentService } from './parliament.service';
+import { Parliament } from './parliament';
 import { Auth, Login } from './auth';
 
 @Component({
@@ -17,15 +18,15 @@ export class ParliamentComponent implements OnInit {
   /* setup --------------------------------------------------------------- */
   private sub;
 
-  // TODO organize these better
   parliament = { groups:[] };
-  initialized: boolean = false;
-  password: string = '';
-  error: string = '';
-  loggedIn: boolean = false;
-  showLoginInput: boolean = false;
-  auth: Auth = { hasAuth:false };
-  refreshInterval: string = '1500';
+
+  initialized:boolean = false;
+  password:string = '';
+  error:string = '';
+  loggedIn:boolean = false;
+  showLoginInput:boolean = false;
+  auth:Auth = { hasAuth:false };
+  refreshInterval:string = '1500';
   searchTerm:string = '';
   showNewGroupForm:boolean = false;
   newGroupTitle:string = '';
@@ -77,7 +78,7 @@ export class ParliamentComponent implements OnInit {
   }
 
   startAutoRefresh() {
-    let timer = TimerObservable.create(0, parseInt(this.refreshInterval));
+    let timer = TimerObservable.create(parseInt(this.refreshInterval), parseInt(this.refreshInterval));
     this.sub = timer.subscribe(() => {
       if (this.refreshInterval) { this.loadData(); }
     });
@@ -91,7 +92,7 @@ export class ParliamentComponent implements OnInit {
    * Updates fetched parliament with current view flags and values
    * Assumes that groups and clusters within groups are in the same order
    */
-  updateParliament(data) { // TODO test this
+  updateParliament(data) {
     if (!this.initialized) {
       this.parliament   = data;
       this.initialized  = true;
@@ -135,6 +136,10 @@ export class ParliamentComponent implements OnInit {
 
 
   /* page functions ------------------------------------------------------ */
+  getTrackingId(index, item){
+    return item.id
+  }
+
   login() {
     this.showLoginInput = !this.showLoginInput;
 
@@ -411,7 +416,7 @@ export class ParliamentComponent implements OnInit {
           group.error = '';
           let index = 0;
           for(let c of group.clusters) {
-            if (c.id === cluster.id) { // TODO use id here
+            if (c.id === cluster.id) {
               group.clusters.splice(index, 1);
               break;
             }

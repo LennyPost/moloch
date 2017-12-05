@@ -10,11 +10,9 @@ import { Auth, Login } from './auth';
 @Injectable()
 export class AuthService {
 
+  private loggedIn:boolean = false;
   private _loggedIn = new BehaviorSubject<boolean>(false);
   loggedIn$ = this._loggedIn.asObservable();
-
-  // TODO need this or use _loggedIn?
-  private loggedIn:boolean = false;
 
   constructor(private http:HttpClient) {
     if (localStorage.getItem('token')) {
