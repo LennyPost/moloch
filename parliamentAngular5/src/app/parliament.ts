@@ -9,11 +9,18 @@ export class Group {
   clusters    : [Object];
 }
 
-// TODO combine GroupCreated and Response?
+// TODO combine GroupCreated/ClusterCreated and Response?
 export class GroupCreated {
   group   : Object;
   success : boolean;
   text    : string;
+}
+
+export class ClusterCreated {
+  cluster   : Object;
+  succes    : boolean;
+  text      : string;
+  parliament: Parliament;
 }
 
 export class Response {

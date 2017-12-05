@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 
 import { Observable } from 'rxjs/Observable';
-import { Parliament, GroupCreated, Response } from './parliament';
+import { Parliament, GroupCreated, ClusterCreated, Response } from './parliament';
 
 @Injectable()
 export class ParliamentService {
@@ -17,7 +17,7 @@ export class ParliamentService {
     return this.http.post<GroupCreated>('api/groups', group);
   }
 
-  editGroup (id, group):Observable<Response> { // TODO set type
+  editGroup (id, group):Observable<Response> {
     return this.http.put<Response>(`api/groups/${id}`, group);
   }
 
@@ -25,4 +25,15 @@ export class ParliamentService {
     return this.http.delete<Response>(`api/groups/${id}`);
   }
 
+  createCluster (id, cluster):Observable<ClusterCreated> {
+    return this.http.post<ClusterCreated>(`api/groups/${id}/clusters`, cluster);
+  }
+
+  editCluster (groupId, clusterId, cluster):Observable<Response> {
+    return this.http.put<Response>(`/api/groups/${groupId}/clusters/${clusterId}`, cluster);
+  }
+
+  deleteCluster (groupId, clusterId):Observable<Response> {
+    return this.http.delete<Response>(`/api/groups/${groupId}/clusters/${clusterId}`);
+  }
 }

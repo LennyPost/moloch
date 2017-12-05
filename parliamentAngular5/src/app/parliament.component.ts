@@ -63,6 +63,7 @@ export class ParliamentComponent implements OnInit{
         (data) => {
           this.error = '';
           this.updateParliament(data);
+          this.filterClusters();
         },
         (err) => {
           this.error = err.error.text ||
@@ -176,6 +177,19 @@ export class ParliamentComponent implements OnInit{
     }
   }
 
+  filterClusters() {
+    for(let group of this.parliament.groups) {
+      if(!this.searchTerm) {
+        group.filteredClusters = Object.assign([], group.clusters);
+        continue;
+      }
+      group.filteredClusters = Object.assign([], group.clusters)
+        .filter((item) => {
+          return item.title.toLowerCase().indexOf(this.searchTerm.toLowerCase()) > -1;
+        });
+    }
+  }
+
   /**
    * Creates a new group in the parliament
    * newGroupTitle is required
@@ -198,6 +212,7 @@ export class ParliamentComponent implements OnInit{
         (data) => {
           this.showNewGroupForm = false;
           this.parliament.groups.push(data.group);
+          this.filterClusters();
         },
         (err) => {
           this.error = err.error.text || 'Unable to create group';
@@ -272,6 +287,136 @@ export class ParliamentComponent implements OnInit{
         },
         (err) => {
           group.error = err.error.text || 'Unable to delete this group';
+        }
+      );
+  }
+
+  /**
+   * Sends a request to create a new cluster within a group
+   * If succesful, updates the group in the view, otherwise displays error
+   * @param {object} group - the group to add the cluster
+   */
+  createNewCluster(group) {
+    group.error = '';
+
+    if (!group.newClusterTitle) {
+      group.error = 'A cluster must have a title';
+      return;
+    }
+    if (!group.newClusterUrl) {
+      group.error = 'A cluster must have a url';
+      return;
+    }
+
+    let newCluster = {
+      title       : group.newClusterTitle,
+      description : group.newClusterDescription,
+      url         : group.newClusterUrl,
+      localUrl    : group.newClusterLocalUrl,
+      multiviewer : group.newClusterMultiviewer,
+      disabled    : group.newClusterDisabled
+    };
+
+    this.parliamentService.createCluster(group.id, newCluster)
+      .subscribe(
+        (data) => {
+          group.error = '';
+          group.showNewClusterForm = false;
+          group.clusters.push(data.cluster);
+          this.updateParliament(data.parliament);
+          this.filterClusters();
+        },
+        (err) => {
+          group.error = err.error.text || 'Unable to add a cluster to this group';
+        }
+      );
+  }
+
+  /**
+   * Displays form fields to edit a cluster's data
+   * Prefills the inputs with the existing cluster's data
+   * @param {object} cluster - the cluster to display a form for
+   */
+  displayEditClusterForm(cluster) {
+    cluster.showEditClusterForm = true;
+    cluster.newTitle        = cluster.title;
+    cluster.newDescription  = cluster.description;
+    cluster.newUrl          = cluster.url;
+    cluster.newLocalUrl     = cluster.localUrl;
+    cluster.newMultiviewer  = cluster.multiviewer;
+    cluster.newDisabled     = cluster.disabled;
+  }
+
+  /**
+   * Sends request to edit a cluster
+   * If succesful, updates the cluster in the view, otherwise displays error
+   * @param {object} group - the group containing the cluster
+   * @param {object} cluster - the cluster to update
+   */
+  editCluster(group, cluster) {
+    cluster.error = false;
+
+    if (!cluster.newTitle) {
+      cluster.error = 'A cluster must have a title';
+      return;
+    }
+    if (!cluster.newUrl) {
+      cluster.error = 'A cluster must have a url';
+      return;
+    }
+
+    let updatedCluster = {
+      title       : cluster.newTitle,
+      description : cluster.newDescription,
+      url         : cluster.newUrl,
+      localUrl    : cluster.newLocalUrl,
+      multiviewer : cluster.newMultiviewer,
+      disabled    : cluster.newDisabled
+    };
+
+    this.parliamentService.editCluster(group.id, cluster.id, updatedCluster)
+      .subscribe(
+        (data) => {
+          cluster.error = false;
+          cluster.showEditClusterForm = false;
+          cluster.title       = cluster.newTitle;
+          cluster.description = cluster.newDescription;
+          cluster.url         = cluster.newUrl;
+          cluster.localUrl    = cluster.newLocalUrl;
+          cluster.multiviewer = cluster.newMultiviewer;
+          cluster.disabled    = cluster.newDisabled;
+        },
+        (err) => {
+          cluster.error = err.error.text || 'Unable to update this cluster';
+        }
+      );
+  }
+
+  /**
+   * Sends a request to delete a cluster within a group
+   * If succesful, updates the group in the view, otherwise displays error
+   * @param {object} group - the group to remove the cluster from
+   * @param {object} cluster - the cluster to remove
+   */
+  deleteCluster(group, cluster) {
+    group.error = '';
+
+    this.parliamentService.deleteCluster(group.id, cluster.id)
+      .subscribe(
+        (data) => {
+          group.error = '';
+          let index = 0;
+          for(let c of group.clusters) {
+            if (c.id === cluster.id) { // TODO use id here
+              group.clusters.splice(index, 1);
+              break;
+            }
+            ++index;
+          }
+          this.filterClusters();
+        },
+        (err) => {
+          group.error = err.error.text || 'Unable to remove cluster from this group';
         }
       );
   }

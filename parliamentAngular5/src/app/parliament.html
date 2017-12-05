@@ -69,7 +69,8 @@
             <span class="fa fa-search"></span>
           </span>
           <input type="text" class="form-control" placeholder="Search clusters"
-            [(ngModel)]="searchTerm" [ngModelOptions]="{debounce:400}">
+            [(ngModel)]="searchTerm" [ngModelOptions]="{debounce:400}"
+            (ngModelChange)="filterClusters()">
         </div>
       </div> <!-- /search -->
       <!-- create group -->
@@ -130,7 +131,7 @@
     <div *ngFor="let group of parliament.groups" class="mb-4">
 
       <!-- group title/description -->
-      <div class="row" ng-if="group.filteredClusters.length > 0 || (!group.clusters.length && !searchTerm)">
+      <div class="row" *ngIf="group.filteredClusters.length > 0 || (!group.clusters.length && !searchTerm)">
         <div class="col-md-12">
           <h5 class="mb-1">
             <!-- group action buttons -->
@@ -216,6 +217,219 @@
           <hr>
         </div>
       </div> <!-- /edit group form -->
+
+      <!-- create cluster form -->
+      <div *ngIf="group.showNewClusterForm && auth.hasAuth">
+        <div class="col-md-12">
+          <hr>
+          <form>
+            <div class="form-group row">
+              <label for="newClusterTitle" class="col-sm-2 col-form-label">
+                Title<sup class="text-danger">*</sup>
+              </label>
+              <div class="col-sm-10">
+                <input type="text" class="form-control" id="newClusterTitle"
+                  name="newClusterTitle" placeholder="Cluster title"
+                  [(ngModel)]="group.newClusterTitle">
+              </div>
+            </div>
+            <div class="form-group row">
+              <label for="newClusterDescription" class="col-sm-2 col-form-label">
+                Description
+              </label>
+              <div class="col-sm-10">
+                <textarea rows="3" class="form-control" id="newClusterDescription"
+                  name="newClusterDescription" placeholder="Cluster description"
+                  [(ngModel)]="group.newClusterDescription"></textarea>
+              </div>
+            </div>
+            <div class="form-group row">
+              <label for="newClusterUrl" class="col-sm-2 col-form-label">
+                Url<sup class="text-danger">*</sup>
+              </label>
+              <div class="col-sm-10">
+                <input type="text" class="form-control" id="newClusterUrl"
+                  name="newClusterUrl" placeholder="Cluster url"
+                  [(ngModel)]="group.newClusterUrl">
+              </div>
+            </div>
+            <div class="form-group row">
+              <label for="newClusterLocalUrl" class="col-sm-2 col-form-label">
+                Local Url
+              </label>
+              <div class="col-sm-10">
+                <input type="text" class="form-control" id="newClusterLocalUrl"
+                  name="newClusterLocalUrl" placeholder="Cluster local url"
+                  [(ngModel)]="group.newClusterLocalUrl">
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-sm-10 offset-sm-2">
+              <div class="form-check form-check-inline">
+                <label class="form-check-label">
+                  <input class="form-check-input" type="checkbox"
+                  id="newClusterMultiviewer" name="newClusterMultiviewer"
+                  [(ngModel)]="group.newClusterMultiviewer"> Multiviewer
+                </label>
+              </div>
+              <div class="form-check form-check-inline">
+                <label class="form-check-label">
+                  <input class="form-check-input" type="checkbox"
+                    id="newClusterDisabled" name="newClusterDisabled"
+                    [(ngModel)]="group.newClusterDisabled"> Disabled
+                </label>
+              </div>
+              </div>
+            </div>
+          </form>
+          <hr>
+        </div>
+      </div> <!-- /create cluster form -->
+
+      <!-- clusters -->
+      <ul class="cluster-group d-flex flex-wrap row mb-4">
+        <li *ngFor="let cluster of group.filteredClusters"
+          class="cluster col-sm-12 col-md-6 col-lg-4 col-xl-3 mb-2 animate-opacity">
+          <div class="card bg-light">
+            <div class="card-body">
+              <div>
+                <h5 class="mb-1" style="display:inline-block">
+                  <a *ngIf="!cluster.disabled"
+                    class="no-decoration" href="{{cluster.url}}/sessions">
+                    {{cluster.title}}
+                  </a>
+                  <span *ngIf="cluster.disabled">{{cluster.title}}</span>
+                  <small class="text-muted" *ngIf="cluster.multiviewer">
+                    (multiviewer)
+                  </small>
+                  <small class="text-muted" *ngIf="cluster.disabled">
+                    (disabled)
+                  </small>
+                </h5>
+                <span *ngIf="!cluster.disabled" style="display:inline-table;"
+                  class="badge badge-pill badge-secondary cursor-help pull-right"
+                  [ngClass]="{'badge-success':cluster.status === 'green','badge-warning':cluster.status === 'yellow','badge-danger':cluster.status === 'red'}"
+                  data-toggle="tooltip" data-placement="left" title="Moloch ES Status {{cluster.healthError}}">
+                  <span *ngIf="cluster.status">{{cluster.status}}</span>
+                  <span *ngIf="cluster.healthError" class="fa fa-exclamation-triangle"></span>
+                  <span *ngIf="!cluster.status && !cluster.healthError">????</span>
+                </span>
+              </div>
+              <hr>
+              <p class="text-muted small mb-2">{{cluster.description}}</p>
+              <!-- <small *ngIf="!cluster.disabled">
+                <div *ngIf="!cluster.multiviewer && !cluster.statsError">
+                  <strong>{{cluster.deltaBPS || 0 | commaString}}</strong>
+                  Bytes/Sec<br>
+                  <strong>{{cluster.deltaTDPS || 0 | commaString}}</strong>
+                  Packet Drops/Sec
+                </div>
+              </small> -->
+              <div class="alert alert-danger alert-sm" *ngIf="cluster.error">
+                <span class="fa fa-exclamation-triangle"></span>&nbsp;
+                {{cluster.error}}
+                <button type="button" class="close cursor-pointer"
+                  (click)="cluster.error = false">
+                  <span>&times;</span>
+                </button>
+              </div>
+              <!-- edit cluster -->
+              <div *ngIf="cluster.showEditClusterForm && auth.hasAuth" class="small">
+                <hr class="mt-2">
+                <form class="edit-cluster">
+                  <div class="form-group">
+                    <label for="newClusterTitle">Title<sup class="text-danger">*</sup></label>
+                    <input type="text" class="form-control form-control-sm"
+                      id="newClusterTitle" name="newClusterTitle"
+                      placeholder="Cluster title" [(ngModel)]="cluster.newTitle">
+                  </div>
+                  <div class="form-group">
+                    <label for="newClusterDescription">Description</label>
+                    <textarea rows="3" class="form-control form-control-sm"
+                      id="newClusterDescription" name="newClusterDescription"
+                      placeholder="Cluster description" [(ngModel)]="cluster.newDescription"></textarea>
+                  </div>
+                  <div class="form-group">
+                    <label for="newClusterUrl">Url<sup class="text-danger">*</sup></label>
+                    <input type="text" class="form-control form-control-sm"
+                      id="newClusterUrl" name="newClusterUrl"
+                      placeholder="Cluster url" [(ngModel)]="cluster.newUrl">
+                  </div>
+                  <div class="form-group">
+                    <label for="newClusterLocalUrl">Local Url</label>
+                    <input type="text" class="form-control form-control-sm"
+                      id="newClusterLocalUrl" name="newClusterLocalUrl"
+                      placeholder="Cluster local url" [(ngModel)]="cluster.newLocalUrl">
+                  </div>
+                  <div class="form-check form-check-inline">
+                    <label class="form-check-label">
+                      <input class="form-check-input" type="checkbox"
+                      id="newClusterMultiviewer" name="newClusterMultiviewer"
+                      [(ngModel)]="cluster.newMultiviewer"> Multiviewer
+                    </label>
+                  </div>
+                  <div class="form-check form-check-inline">
+                    <label class="form-check-label">
+                      <input class="form-check-input" type="checkbox"
+                        id="newClusterDisabled" name="newClusterDisabled"
+                        [(ngModel)]="cluster.newDisabled"> Disabled
+                    </label>
+                  </div>
+                </form>
+              </div> <!-- /edit cluster -->
+            </div>
+            <div class="card-footer small">
+              <span *ngIf="!cluster.multiviewer && cluster.statsError"
+                data-toggle="tooltip" data-placement="top" title="{{cluster.statsError}}">
+                <span class="fa fa-exclamation-triangle text-danger"></span>&nbsp;
+                <em class="text-danger"></em>
+              </span>
+              <a href="{{cluster.url}}/stats" class="no-decoration"
+                data-toggle="tooltip" data-placement="top"
+                title="Go to the Stats page">
+                view stats
+              </a>
+              <a *ngIf="!cluster.showEditClusterForm && loggedIn"
+                class="btn btn-sm btn-outline-warning pull-right cursor-pointer"
+                (click)="displayEditClusterForm(cluster)"
+                data-toggle="tooltip" data-placement="top"
+                title="Edit cluster">
+                <span class="fa fa-pencil"></span>
+              </a>
+              <a *ngIf="cluster.showEditClusterForm && loggedIn"
+                class="btn btn-sm btn-outline-success pull-right cursor-pointer mr-1"
+                (click)="editCluster(group, cluster)"
+                data-toggle="tooltip" data-placement="top"
+                title="Save cluster">
+                <span class="fa fa-save"></span>&nbsp;
+                Save
+              </a>
+              <a *ngIf="cluster.showEditClusterForm && loggedIn"
+                class="btn btn-sm btn-outline-warning pull-right cursor-pointer mr-1"
+                (click)="cluster.showEditClusterForm = false;"
+                data-toggle="tooltip" data-placement="top"
+                title="Cancel">
+                <span class="fa fa-ban"></span>
+              </a>
+              <a *ngIf="cluster.showEditClusterForm && loggedIn"
+                class="btn btn-sm btn-outline-danger pull-right cursor-pointer mr-1"
+                (click)="deleteCluster(group, cluster)"
+                data-toggle="tooltip" data-placement="top"
+                title="Delete cluster">
+                <span class="fa fa-trash-o"></span>
+              </a>
+            </div>
+          </div>
+        </li>
+      </ul> <!-- /clusters -->
+
+      <!-- no clusters -->
+      <div *ngIf="!group.clusters.length && !searchTerm">
+        No clusters in this group.
+        <a (click)="group.showNewClusterForm = true" href
+          *ngIf="!group.showNewClusterForm && loggedIn"
+          class="no-decoration">Create one</a>
+      </div> <!-- no clusters -->
 
     </div> <!-- groups -->
 

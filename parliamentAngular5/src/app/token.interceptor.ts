@@ -1,13 +1,12 @@
-// import { HttpInterceptor } from '@angular/common/http';
-
 import { Injectable } from '@angular/core';
 import {
   HttpRequest,
+  HttpResponse,
   HttpHandler,
   HttpEvent,
   HttpInterceptor
 } from '@angular/common/http';
-// import { AuthService } from './auth/auth.service';
+
 import { Observable } from 'rxjs/Observable';
 
 
