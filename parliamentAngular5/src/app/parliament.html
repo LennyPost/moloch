@@ -13,23 +13,30 @@
               <span class="fa fa-unlock"></span>&nbsp;
               Login
             </a> <!-- /login button -->
+            <!-- cancel login button -->
+            <a class="btn btn-outline-warning pull-right cursor-pointer"
+              (click)="cancelLogin()"
+              [ngClass]="{'hide-cancel-btn':!showLoginInput,'show-cancel-btn ml-1':showLoginInput}">
+              <span class="fa fa-ban"></span>
+            </a> <!-- /cancel login button -->
             <!-- password input -->
-            <input class="form-control pull-right" [(ngModel)]="password"
-              [ngClass]="{'hide-login':!showLoginInput,'show-login ml-4':showLoginInput}"
-              placeholder="password please" type="password"> <!-- /password input -->
+            <input class="form-control pull-right" type="password"
+              (keyup.enter)="login()"
+              [autofocus]="focusOnPasswordInput" [(ngModel)]="password"
+              [ngClass]="{'hide-login':!showLoginInput,'show-login':showLoginInput}"
+              placeholder="password please"> <!-- /password input -->
           </span> <!-- /logged out -->
           <!-- logged in -->
-          <a class="btn btn-outline-warning pull-right cursor-pointer ml-4"
+          <a class="btn btn-outline-warning pull-right cursor-pointer"
             (click)="logout()" *ngIf="loggedIn">
             <span class="fa fa-lock"></span>&nbsp;
             Logout
           </a> <!-- /logged in -->
           <!-- refresh interval select -->
-          <span class="form-group pull-right">
+          <span class="form-group pull-right mr-4">
             <div class="input-group">
               <span class="input-group-addon cursor-help"
-                data-toggle="tooltip" data-placement="left"
-                title="Refresh Interval">
+                placement="left" ngbTooltip="Refresh Interval">
                 <span class="fa fa-refresh"></span>
               </span>
               <select class="form-control refresh-interval-control"
@@ -69,8 +76,7 @@
             <span class="fa fa-search"></span>
           </span>
           <input type="text" class="form-control" placeholder="Search clusters"
-            [(ngModel)]="searchTerm" [ngModelOptions]="{debounce:400}"
-            (ngModelChange)="filterClusters()">
+            [(ngModel)]="searchTerm" (keyup)="debounceSearch()" />
         </div>
       </div> <!-- /search -->
       <!-- create group -->
@@ -126,6 +132,26 @@
         <hr>
       </div>
     </div> <!-- /new group form -->
+
+    <!-- no results for searchTerm filter -->
+    <div *ngIf="searchTerm && !numFilteredClusters && parliament.groups.length"
+      class="info-area vertical-center">
+      <div class="text-muted">
+        <span class="fa fa-3x fa-folder-open text-muted-more"></span>
+        No clusters match your search
+      </div>
+    </div> <!-- /no results for searchTerm filter -->
+
+    <!-- no groups -->
+    <div *ngIf="!parliament.groups.length && !showNewGroupForm"
+      class="info-area vertical-center">
+      <div class="text-muted">
+        <span class="fa fa-3x fa-folder-open text-muted-more"></span>
+        No groups in your cluster.
+        <a (click)="showNewGroupForm = true" *ngIf="loggedIn"
+          class="cursor-pointer no-href no-decoration">Create one</a>
+      </div>
+    </div> <!-- /no groups -->
 
     <!-- groups -->
     <div *ngFor="let group of parliament.groups; trackBy:getTrackingId" class="mb-4">
@@ -287,9 +313,10 @@
       </div> <!-- /create cluster form -->
 
       <!-- clusters -->
-      <ul class="cluster-group d-flex flex-wrap row mb-4">
+      <ul class="cluster-group d-flex flex-wrap row mb-4"
+        [@clusters]="group.filteredClusters.length">
         <li *ngFor="let cluster of group.filteredClusters; trackBy:getTrackingId"
-          class="cluster col-sm-12 col-md-6 col-lg-4 col-xl-3 mb-2 animate-opacity">
+          class="cluster col-sm-12 col-md-6 col-lg-4 col-xl-3 mb-2">
           <div class="card bg-light">
             <div class="card-body">
               <div>
@@ -309,7 +336,7 @@
                 <span *ngIf="!cluster.disabled" style="display:inline-table;"
                   class="badge badge-pill badge-secondary cursor-help pull-right"
                   [ngClass]="{'badge-success':cluster.status === 'green','badge-warning':cluster.status === 'yellow','badge-danger':cluster.status === 'red'}"
-                  data-toggle="tooltip" data-placement="left" title="Moloch ES Status {{cluster.healthError}}">
+                  placement="left" ngbTooltip="Moloch ES Status {{cluster.healthError}}">
                   <span *ngIf="cluster.status">{{cluster.status}}</span>
                   <span *ngIf="cluster.healthError" class="fa fa-exclamation-triangle"></span>
                   <span *ngIf="!cluster.status && !cluster.healthError">????</span>
@@ -380,42 +407,37 @@
             </div>
             <div class="card-footer small">
               <span *ngIf="!cluster.multiviewer && cluster.statsError"
-                data-toggle="tooltip" data-placement="top" title="{{cluster.statsError}}">
+                placement="right" ngbTooltip="{{cluster.statsError}}">
                 <span class="fa fa-exclamation-triangle text-danger"></span>&nbsp;
                 <em class="text-danger"></em>
               </span>
               <a href="{{cluster.url}}/stats" class="no-decoration"
-                data-toggle="tooltip" data-placement="top"
-                title="Go to the Stats page">
+                placement="right" ngbTooltip="Go to the Stats page">
                 view stats
               </a>
               <a *ngIf="!cluster.showEditClusterForm && loggedIn"
                 class="btn btn-sm btn-outline-warning pull-right cursor-pointer"
                 (click)="displayEditClusterForm(cluster)"
-                data-toggle="tooltip" data-placement="top"
-                title="Edit cluster">
+                placement="top" ngbTooltip="Edit cluster">
                 <span class="fa fa-pencil"></span>
               </a>
               <a *ngIf="cluster.showEditClusterForm && loggedIn"
                 class="btn btn-sm btn-outline-success pull-right cursor-pointer mr-1"
                 (click)="editCluster(group, cluster)"
-                data-toggle="tooltip" data-placement="top"
-                title="Save cluster">
+                placement="top" ngbTooltip="Save cluster">
                 <span class="fa fa-save"></span>&nbsp;
                 Save
               </a>
               <a *ngIf="cluster.showEditClusterForm && loggedIn"
                 class="btn btn-sm btn-outline-warning pull-right cursor-pointer mr-1"
                 (click)="cluster.showEditClusterForm = false;"
-                data-toggle="tooltip" data-placement="top"
-                title="Cancel">
+                placement="top" ngbTooltip="Cancel">
                 <span class="fa fa-ban"></span>
               </a>
               <a *ngIf="cluster.showEditClusterForm && loggedIn"
                 class="btn btn-sm btn-outline-danger pull-right cursor-pointer mr-1"
                 (click)="deleteCluster(group, cluster)"
-                data-toggle="tooltip" data-placement="top"
-                title="Delete cluster">
+                placement="top" ngbTooltip="Delete cluster">
                 <span class="fa fa-trash-o"></span>
               </a>
             </div>
@@ -424,11 +446,11 @@
       </ul> <!-- /clusters -->
 
       <!-- no clusters -->
-      <div *ngIf="!group.clusters.length && !searchTerm">
+      <div *ngIf="!group.clusters.length && !searchTerm && !group.showNewClusterForm">
         No clusters in this group.
-        <a (click)="group.showNewClusterForm = true" href
-          *ngIf="!group.showNewClusterForm && loggedIn"
-          class="no-decoration">Create one</a>
+        <a (click)="group.showNewClusterForm = true"
+          *ngIf="loggedIn"
+          class="no-decoration cursor-pointer no-href">Create one</a>
       </div> <!-- no clusters -->
 
     </div> <!-- groups -->

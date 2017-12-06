@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { trigger,style,transition,animate,keyframes,query } from '@angular/animations';
 
 import { TimerObservable } from "rxjs/observable/TimerObservable";
 
@@ -11,12 +12,31 @@ import { Auth, Login } from './auth';
   selector    : 'app-root',
   templateUrl : './parliament.html',
   styleUrls   : [ './parliament.css' ],
-  providers   : [ ParliamentService ]
+  providers   : [ ParliamentService ],
+  animations  : [
+    trigger('clusters', [
+      transition('* => *', [
+        query(':enter',
+          animate('.4s ease-in', keyframes([
+            style({opacity: 0, width: '0px'}),
+            style({opacity: .5, width: '50px'}),
+            style({opacity: 1, width: '100%'}),
+          ])), {optional: true}),
+        query(':leave',
+          animate('.4s ease-out', keyframes([
+            style({opacity: 1, width: '100%'}),
+            style({opacity: .5, width: '50px'}),
+            style({opacity: 0, width: '0px'}),
+          ])), {optional: true}),
+      ])
+    ])
+  ]
 })
 export class ParliamentComponent implements OnInit {
 
   /* setup --------------------------------------------------------------- */
   private sub;
+  private timeout;
 
   parliament = { groups:[] };
 
@@ -31,6 +51,8 @@ export class ParliamentComponent implements OnInit {
   showNewGroupForm:boolean = false;
   newGroupTitle:string = '';
   newGroupDescription:string = '';
+  numFilteredClusters:number;
+  focusOnPasswordInput:boolean = false;
 
   constructor(
     private parliamentService: ParliamentService,
@@ -59,9 +81,8 @@ export class ParliamentComponent implements OnInit {
   }
 
   /* controller functions ------------------------------------------------ */
-  /**
-   * Loads the parliament or displays an error
-   */
+
+  // Loads the parliament or displays an error
   loadData() {
     this.parliamentService.getParliament()
       .subscribe(
@@ -88,10 +109,8 @@ export class ParliamentComponent implements OnInit {
     this.sub.unsubscribe();
   }
 
-  /**
-   * Updates fetched parliament with current view flags and values
-   * Assumes that groups and clusters within groups are in the same order
-   */
+  // Updates fetched parliament with current view flags and values
+  // Assumes that groups and clusters within groups are in the same order
   updateParliament(data) {
     if (!this.initialized) {
       this.parliament   = data;
@@ -134,6 +153,23 @@ export class ParliamentComponent implements OnInit {
     this.parliament = data;
   }
 
+  filterClusters() {
+    this.numFilteredClusters = 0;
+
+    for(let group of this.parliament.groups) {
+      if(!this.searchTerm) {
+        group.filteredClusters = Object.assign([], group.clusters);
+        this.numFilteredClusters += group.filteredClusters.length;
+        continue;
+      }
+      group.filteredClusters = Object.assign([], group.clusters)
+        .filter((item) => {
+          return item.title.toLowerCase().indexOf(this.searchTerm.toLowerCase()) > -1;
+        });
+      this.numFilteredClusters += group.filteredClusters.length;
+    }
+  }
+
 
   /* page functions ------------------------------------------------------ */
   getTrackingId(index, item){
@@ -142,6 +178,7 @@ export class ParliamentComponent implements OnInit {
 
   login() {
     this.showLoginInput = !this.showLoginInput;
+    this.focusOnPasswordInput = this.showLoginInput;
 
     if (!this.showLoginInput) {
       if (!this.password) {
@@ -167,14 +204,19 @@ export class ParliamentComponent implements OnInit {
     }
   }
 
+  cancelLogin() {
+    this.showLoginInput = false;
+    this.focusOnPasswordInput = false;
+    this.password = '';
+    this.error = '';
+  }
+
   logout() {
     this.loggedIn = false;
     localStorage.setItem('token', ''); // clear token
   }
 
-  /**
-   * Fired when interval refresh select input is changed
-   */
+  // Fired when interval refresh select input is changed
   changeRefreshInterval() {
     localStorage.setItem('refreshInterval', this.refreshInterval);
 
@@ -186,23 +228,15 @@ export class ParliamentComponent implements OnInit {
     }
   }
 
-  filterClusters() {
-    for(let group of this.parliament.groups) {
-      if(!this.searchTerm) {
-        group.filteredClusters = Object.assign([], group.clusters);
-        continue;
-      }
-      group.filteredClusters = Object.assign([], group.clusters)
-        .filter((item) => {
-          return item.title.toLowerCase().indexOf(this.searchTerm.toLowerCase()) > -1;
-        });
-    }
+  debounceSearch() {
+    if (this.timeout) { clearTimeout(this.timeout); }
+    this.timeout = setTimeout(() => {
+      this.filterClusters();
+    }, 400);
   }
 
-  /**
-   * Creates a new group in the parliament
-   * newGroupTitle is required
-   */
+  // Creates a new group in the parliament
+  // newGroupTitle is required/
   createNewGroup() {
     this.error = '';
 

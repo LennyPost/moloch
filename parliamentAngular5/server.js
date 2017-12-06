@@ -139,7 +139,7 @@ function verifyToken(req, res, next) {
   // verifies token and expiration
   jwt.verify(token, app.get('password'), (err, decoded) => {
     if (err) {
-      return tokenError(req, res, 'Failed to authenticate token.');
+      return tokenError(req, res, 'Failed to authenticate token. Try logging in again.');
     } else {
       // if everything is good, save to request for use in other routes
       req.decoded = decoded;
