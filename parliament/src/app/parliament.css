@@ -1,24 +1,8 @@
-@import "~font-awesome/css/font-awesome.css";
-
-/* parliament page styles */
-
-/* general styles -------------------------------------- */
-html, body { background-color: #f0f0f0; }
-
-.cursor-pointer { cursor: pointer; }
-.pointer-cursor { cursor: pointer; }
-.cursor-help    { cursor: help; }
-.help-cursor    { cursor: help; }
-
-.no-decoration  { text-decoration: none !important; }
-
-a.no-href       { color: #007bff; }
-a.no-href:hover { color: #0056b3; }
-
-.text-muted-more{ color: #dddddd; }
+/* parliament page styles ------------------------------ */
 
 /* refresh interval select box */
 .refresh-interval-control { -webkit-appearance: none; }
+
 
 /* cluster styles */
 .cluster-group {
@@ -46,6 +30,7 @@ a.no-href:hover { color: #0056b3; }
   padding: 0.5rem 0.75rem;
 }
 
+
 /* compact form for editing clusters */
 form.edit-cluster label {
   margin:0;
@@ -53,6 +38,7 @@ form.edit-cluster label {
 form.edit-cluster .form-group {
   margin-bottom: .25rem;
 }
+
 
 /* displays large text for important information
  * note: must contain an inner div with the text

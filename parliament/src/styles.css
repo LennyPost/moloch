@@ -1,0 +1,17 @@
+@import "~font-awesome/css/font-awesome.css";
+
+
+/* general styles -------------------------------------- */
+html, body { background-color: #f0f0f0; }
+
+.cursor-pointer { cursor: pointer; }
+.pointer-cursor { cursor: pointer; }
+.cursor-help    { cursor: help; }
+.help-cursor    { cursor: help; }
+
+.no-decoration  { text-decoration: none !important; }
+
+a.no-href       { color: #007bff; }
+a.no-href:hover { color: #0056b3; }
+
+.text-muted-more{ color: #dddddd; }
