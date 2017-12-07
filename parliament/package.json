@@ -8,7 +8,8 @@
     "dev": "node server.js -- --password=admin --port=8008 --file=./parliament.dev.json & ng build --watch",
     "build": "ng build",
     "test": "ng test",
-    "lint": "ng lint",
+    "tslint": "ng lint",
+    "jslint": "jshint server.js",
     "e2e": "ng e2e"
   },
   "dependencies": {

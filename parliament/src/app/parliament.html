@@ -22,7 +22,7 @@
             <!-- password input -->
             <input class="form-control pull-right" type="password"
               (keyup.enter)="login()"
-              [app-autofocus]="focusOnPasswordInput" [(ngModel)]="password"
+              [appAutofocus]="focusOnPasswordInput" [(ngModel)]="password"
               [ngClass]="{'hide-login':!showLoginInput,'show-login':showLoginInput}"
               placeholder="password please"> <!-- /password input -->
           </span> <!-- /logged out -->
