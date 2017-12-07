@@ -115,7 +115,7 @@ app.use((err, req, res, next) => {
 
 // 404 page
 app.use((req, res, next) => {
-  res.status(404).sendFile(`${__dirname}/dist/404.html`)
+  res.status(404).sendFile(`${__dirname}/dist/404.html`);
 });
 
 // Verify token
