@@ -46,7 +46,7 @@ export class ParliamentComponent implements OnInit {
   loggedIn = false;
   showLoginInput = false;
   auth: Auth = { hasAuth: false };
-  refreshInterval = '1500';
+  refreshInterval = '15000';
   searchTerm = '';
   showNewGroupForm = false;
   newGroupTitle = '';
@@ -71,7 +71,7 @@ export class ParliamentComponent implements OnInit {
 
     this.loggedIn = this.authService.isLoggedIn();
 
-    if (localStorage.getItem('refreshInterval') !== undefined) {
+    if (localStorage.getItem('refreshInterval') !== null) {
       this.refreshInterval = localStorage.getItem('refreshInterval');
     }
 
