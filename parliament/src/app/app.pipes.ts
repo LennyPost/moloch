@@ -8,7 +8,7 @@ import { Pipe, PipeTransform } from '@angular/core';
  */
 @Pipe({name: 'commaString'})
 export class CommaStringPipe implements PipeTransform {
-  transform(input:number):string {
+  transform(input: number): string {
     if (isNaN(input)) { return '0'; }
     return input.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   }

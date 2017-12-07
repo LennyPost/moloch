@@ -10,25 +10,24 @@ import { Auth, Login } from './auth';
 @Injectable()
 export class AuthService {
 
-  private loggedIn:boolean = false;
+  private loggedIn = false;
   private _loggedIn = new BehaviorSubject<boolean>(false);
   loggedIn$ = this._loggedIn.asObservable();
 
-  constructor(private http:HttpClient) {
+  constructor(private http: HttpClient) {
     if (localStorage.getItem('token')) {
       this.loggedIn = true;
     }
   }
 
-  login (password):Observable<Login> {
-    return this.http.post<Login>('api/auth', { password:password });
+  login(password): Observable<Login> {
+    return this.http.post<Login>('api/auth', { password: password });
   }
 
-  saveToken (token):boolean {
-    if (!token) { token = ''; }
+  saveToken(token): boolean {
+    this.loggedIn = !!token;
 
-    if (token)  { this.loggedIn = true; }
-    else        { this.loggedIn = false; }
+    if (!token) { token = ''; }
 
     localStorage.setItem('token', token);
 
@@ -38,15 +37,15 @@ export class AuthService {
     return this.loggedIn;
   }
 
-  getToken ():string {
+  getToken(): string {
     return localStorage.getItem('token') || '';
   }
 
-  isLoggedIn ():boolean {
+  isLoggedIn(): boolean {
     return this.loggedIn;
   }
 
-  hasAuth ():Observable<Auth> {
+  hasAuth(): Observable<Auth> {
     return this.http.get<Auth>('/api/auth');
   }
 

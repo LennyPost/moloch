@@ -1,10 +1,10 @@
 import { Component, OnInit } from '@angular/core';
-import { trigger,style,transition,animate,keyframes,query } from '@angular/animations';
+import { trigger, style, transition, animate, keyframes, query } from '@angular/animations';
 
-import { TimerObservable } from "rxjs/observable/TimerObservable";
+import { TimerObservable } from 'rxjs/observable/TimerObservable';
 
-import { AuthService } from './auth.service';
 import { ParliamentService } from './parliament.service';
+import { AuthService } from './auth.service';
 import { Parliament } from './parliament';
 import { Auth, Login } from './auth';
 
@@ -34,25 +34,25 @@ import { Auth, Login } from './auth';
 })
 export class ParliamentComponent implements OnInit {
 
-  /* setup --------------------------------------------------------------- */
+  /* setup ----------------------------------------------------------------- */
   private sub;
   private timeout;
 
-  parliament = { groups:[] };
+  parliament = { groups: [] };
 
-  initialized:boolean = false;
-  password:string = '';
-  error:string = '';
-  loggedIn:boolean = false;
-  showLoginInput:boolean = false;
-  auth:Auth = { hasAuth:false };
-  refreshInterval:string = '1500';
-  searchTerm:string = '';
-  showNewGroupForm:boolean = false;
-  newGroupTitle:string = '';
-  newGroupDescription:string = '';
-  numFilteredClusters:number;
-  focusOnPasswordInput:boolean = false;
+  initialized = false;
+  password = '';
+  error = '';
+  loggedIn = false;
+  showLoginInput = false;
+  auth: Auth = { hasAuth: false };
+  refreshInterval = '1500';
+  searchTerm = '';
+  showNewGroupForm = false;
+  newGroupTitle = '';
+  newGroupDescription = '';
+  numFilteredClusters: number;
+  focusOnPasswordInput = false;
 
   constructor(
     private parliamentService: ParliamentService,
@@ -80,7 +80,7 @@ export class ParliamentComponent implements OnInit {
     if (this.refreshInterval) { this.startAutoRefresh(); }
   }
 
-  /* controller functions ------------------------------------------------ */
+  /* controller functions -------------------------------------------------- */
 
   // Loads the parliament or displays an error
   loadData() {
@@ -93,13 +93,14 @@ export class ParliamentComponent implements OnInit {
         },
         (err) => {
           this.error = err.error.text ||
-            'Error fetching health and status information about Molochs in your parliament. The information displayed below is likely out of date';
+            `Error fetching health and status information about Molochs in your parliament.
+             The information displayed below is likely out of date`;
         }
       );
   }
 
   startAutoRefresh() {
-    let timer = TimerObservable.create(parseInt(this.refreshInterval), parseInt(this.refreshInterval));
+    const timer = TimerObservable.create(parseInt(this.refreshInterval, 10), parseInt(this.refreshInterval, 10));
     this.sub = timer.subscribe(() => {
       if (this.refreshInterval) { this.loadData(); }
     });
@@ -118,9 +119,9 @@ export class ParliamentComponent implements OnInit {
       return;
     }
 
-    for(let g = 0, glen = data.groups.length; g < glen; ++g) {
-      let newGroup = data.groups[g];
-      let oldGroup = this.parliament.groups[g];
+    for (let g = 0, glen = data.groups.length; g < glen; ++g) {
+      const newGroup = data.groups[g];
+      const oldGroup = this.parliament.groups[g];
 
       newGroup.error                  = oldGroup.error;
       newGroup.newTitle               = oldGroup.newTitle;
@@ -136,17 +137,17 @@ export class ParliamentComponent implements OnInit {
       newGroup.newClusterDisabled     = oldGroup.newClusterDisabled;
 
       for (let c = 0, clen = newGroup.clusters.length; c < clen; ++c) {
-        let newCluster = newGroup.clusters[c];
-        let oldCluster = oldGroup.clusters[c];
+        const newCluster = newGroup.clusters[c];
+        const oldCluster = oldGroup.clusters[c];
 
-        newCluster.error              = oldCluster.error;
-        newCluster.newTitle           = oldCluster.newTitle;
-        newCluster.newDescription     = oldCluster.newDescription;
-        newCluster.newUrl             = oldCluster.newUrl;
-        newCluster.newLocalUrl        = oldCluster.newLocalUrl;
-        newCluster.newMultiviewer     = oldCluster.newMultiviewer;
-        newCluster.newDisabled        = oldCluster.newDisabled;
-        newCluster.showEditClusterForm= oldCluster.showEditClusterForm;
+        newCluster.error                = oldCluster.error;
+        newCluster.newTitle             = oldCluster.newTitle;
+        newCluster.newDescription       = oldCluster.newDescription;
+        newCluster.newUrl               = oldCluster.newUrl;
+        newCluster.newLocalUrl          = oldCluster.newLocalUrl;
+        newCluster.newMultiviewer       = oldCluster.newMultiviewer;
+        newCluster.newDisabled          = oldCluster.newDisabled;
+        newCluster.showEditClusterForm  = oldCluster.showEditClusterForm;
       }
     }
 
@@ -156,8 +157,8 @@ export class ParliamentComponent implements OnInit {
   filterClusters() {
     this.numFilteredClusters = 0;
 
-    for(let group of this.parliament.groups) {
-      if(!this.searchTerm) {
+    for (const group of this.parliament.groups) {
+      if (!this.searchTerm) {
         group.filteredClusters = Object.assign([], group.clusters);
         this.numFilteredClusters += group.filteredClusters.length;
         continue;
@@ -171,9 +172,9 @@ export class ParliamentComponent implements OnInit {
   }
 
 
-  /* page functions ------------------------------------------------------ */
-  getTrackingId(index, item){
-    return item.id
+  /* page functions -------------------------------------------------------- */
+  getTrackingId(index, item) {
+    return item.id;
   }
 
   login() {
@@ -205,10 +206,10 @@ export class ParliamentComponent implements OnInit {
   }
 
   cancelLogin() {
-    this.showLoginInput = false;
+    this.showLoginInput       = false;
     this.focusOnPasswordInput = false;
     this.password = '';
-    this.error = '';
+    this.error    = '';
   }
 
   logout() {
@@ -245,7 +246,7 @@ export class ParliamentComponent implements OnInit {
       return;
     }
 
-    let newGroup = {
+    const newGroup = {
       title       : this.newGroupTitle,
       description : this.newGroupDescription
     };
@@ -287,10 +288,10 @@ export class ParliamentComponent implements OnInit {
       return;
     }
 
-    let updatedGroup = {
+    const updatedGroup = {
       title       : group.newTitle,
       description : group.newDescription
-    }
+    };
 
     this.parliamentService.editGroup(group.id, updatedGroup)
       .subscribe(
@@ -320,7 +321,7 @@ export class ParliamentComponent implements OnInit {
         (data) => {
           group.error = false;
           let index = 0; // remove the group from the parliament
-          for(let g of this.parliament.groups) {
+          for (const g of this.parliament.groups) {
             if (g.title === group.title) {
               this.parliament.groups.splice(index, 1);
               break;
@@ -351,7 +352,7 @@ export class ParliamentComponent implements OnInit {
       return;
     }
 
-    let newCluster = {
+    const newCluster = {
       title       : group.newClusterTitle,
       description : group.newClusterDescription,
       url         : group.newClusterUrl,
@@ -408,7 +409,7 @@ export class ParliamentComponent implements OnInit {
       return;
     }
 
-    let updatedCluster = {
+    const updatedCluster = {
       title       : cluster.newTitle,
       description : cluster.newDescription,
       url         : cluster.newUrl,
@@ -449,7 +450,7 @@ export class ParliamentComponent implements OnInit {
         (data) => {
           group.error = '';
           let index = 0;
-          for(let c of group.clusters) {
+          for (const c of group.clusters) {
             if (c.id === cluster.id) {
               group.clusters.splice(index, 1);
               break;

@@ -17,18 +17,18 @@ import { AuthService } from './auth.service';
 @Injectable()
 export class TokenInterceptor implements HttpInterceptor {
 
-  private authService:AuthService;
+  private authService: AuthService;
 
-  constructor(private inj:Injector) {}
+  constructor(private inj: Injector) {}
 
-  intercept(request:HttpRequest<any>, next:HttpHandler):Observable<HttpEvent<any>> {
+  intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
 
     // Cyclic dependency error with HttpInterceptor
     // https://github.com/angular/angular/issues/18224
     const authService = this.inj.get(AuthService);
 
     request = request.clone({
-      setHeaders: { 'x-access-token':authService.getToken() }
+      setHeaders: { 'x-access-token': authService.getToken() }
     });
 
     return next.handle(request).do((event: HttpEvent<any>) => {},

@@ -1,7 +1,7 @@
 export class Login {
-  message : string;
-  success : boolean;
-  token   : string;
+  message: string;
+  success: boolean;
+  token: string;
 }
 
 export class Auth {

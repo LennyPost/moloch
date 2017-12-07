@@ -22,7 +22,7 @@
             <!-- password input -->
             <input class="form-control pull-right" type="password"
               (keyup.enter)="login()"
-              [autofocus]="focusOnPasswordInput" [(ngModel)]="password"
+              [app-autofocus]="focusOnPasswordInput" [(ngModel)]="password"
               [ngClass]="{'hide-login':!showLoginInput,'show-login':showLoginInput}"
               placeholder="password please"> <!-- /password input -->
           </span> <!-- /logged out -->
@@ -60,7 +60,7 @@
     <!-- page error -->
     <div class="alert alert-danger" *ngIf="error">
       <span class="fa fa-exclamation-triangle"></span>&nbsp;
-      {{error}}
+      {{ error }}
       <button type="button" class="close cursor-pointer"
         (click)="error = false">
         <span>&times;</span>
@@ -199,14 +199,14 @@
                 Delete Group
               </a>
             </span> <!-- /group action buttons -->
-            {{group.title}}
+            {{ group.title }}
           </h5>
           <p class="lead mb-2" style="font-size:1rem;">
-            {{group.description}}
+            {{ group.description }}
           </p>
           <div class="alert alert-danger alert-sm" *ngIf="group.error">
             <span class="fa fa-exclamation-triangle"></span>&nbsp;
-            {{group.error}}
+            {{ group.error }}
             <button type="button" class="close cursor-pointer"
               (click)="group.error = false">
               <span>&times;</span>
@@ -322,10 +322,10 @@
               <div>
                 <h5 class="mb-1" style="display:inline-block">
                   <a *ngIf="!cluster.disabled"
-                    class="no-decoration" href="{{cluster.url}}/sessions">
-                    {{cluster.title}}
+                    class="no-decoration" href="{{ cluster.url }}/sessions">
+                    {{ cluster.title }}
                   </a>
-                  <span *ngIf="cluster.disabled">{{cluster.title}}</span>
+                  <span *ngIf="cluster.disabled">{{ cluster.title }}</span>
                   <small class="text-muted" *ngIf="cluster.multiviewer">
                     (multiviewer)
                   </small>
@@ -336,25 +336,25 @@
                 <span *ngIf="!cluster.disabled" style="display:inline-table;"
                   class="badge badge-pill badge-secondary cursor-help pull-right"
                   [ngClass]="{'badge-success':cluster.status === 'green','badge-warning':cluster.status === 'yellow','badge-danger':cluster.status === 'red'}"
-                  placement="left" ngbTooltip="Moloch ES Status {{cluster.healthError}}">
-                  <span *ngIf="cluster.status">{{cluster.status}}</span>
+                  placement="left" ngbTooltip="Moloch ES Status {{ cluster.healthError }}">
+                  <span *ngIf="cluster.status">{{ cluster.status }}</span>
                   <span *ngIf="cluster.healthError" class="fa fa-exclamation-triangle"></span>
                   <span *ngIf="!cluster.status && !cluster.healthError">????</span>
                 </span>
               </div>
               <hr>
-              <p class="text-muted small mb-2">{{cluster.description}}</p>
+              <p class="text-muted small mb-2">{{ cluster.description }}</p>
               <small *ngIf="!cluster.disabled">
                 <div *ngIf="!cluster.multiviewer && !cluster.statsError">
-                  <strong>{{cluster.deltaBPS || 0 | commaString}}</strong>
+                  <strong>{{ cluster.deltaBPS || 0 | commaString }}</strong>
                   Bytes/Sec<br>
-                  <strong>{{cluster.deltaTDPS || 0 | commaString}}</strong>
+                  <strong>{{ cluster.deltaTDPS || 0 | commaString }}</strong>
                   Packet Drops/Sec
                 </div>
               </small>
               <div class="alert alert-danger alert-sm" *ngIf="cluster.error">
                 <span class="fa fa-exclamation-triangle"></span>&nbsp;
-                {{cluster.error}}
+                {{ cluster.error }}
                 <button type="button" class="close cursor-pointer"
                   (click)="cluster.error = false">
                   <span>&times;</span>
@@ -407,11 +407,11 @@
             </div>
             <div class="card-footer small">
               <span *ngIf="!cluster.multiviewer && cluster.statsError"
-                placement="right" ngbTooltip="{{cluster.statsError}}">
+                placement="right" ngbTooltip="{{ cluster.statsError }}">
                 <span class="fa fa-exclamation-triangle text-danger"></span>&nbsp;
                 <em class="text-danger"></em>
               </span>
-              <a href="{{cluster.url}}/stats" class="no-decoration"
+              <a href="{{ cluster.url }}/stats" class="no-decoration"
                 placement="right" ngbTooltip="Go to the Stats page">
                 view stats
               </a>
