@@ -218,6 +218,38 @@ void rip_classify(MolochSession_t *session, const unsigned char *UNUSED(data), i
     moloch_session_add_protocol(session, "rip");
 }
 /******************************************************************************/
+void dhcpv6_udp_classify(MolochSession_t *session, const unsigned char *data, int UNUSED(len), int UNUSED(which), void *UNUSED(uw))
+{
+    if ((data[0] != 1 && data[0] != 11) || !MOLOCH_SESSION_v6(session))
+        return;
+    moloch_session_add_protocol(session, "dhcpv6");
+}
+/******************************************************************************/
+void dhcp_udp_classify(MolochSession_t *session, const unsigned char *data, int UNUSED(len), int UNUSED(which), void *UNUSED(uw))
+{
+    if (data[0] != 1 || MOLOCH_SESSION_v6(session))
+        return;
+    moloch_session_add_protocol(session, "dhcp");
+}
+/******************************************************************************/
+void isakmp_udp_classify(MolochSession_t *session, const unsigned char *data, int len, int UNUSED(which), void *UNUSED(uw))
+{
+    if (len < 18 ||
+            (data[16] != 8 && data[16] != 33 && data[16] != 46) ||
+            (data[17] != 0x10 && data[17] != 0x20)) {
+        return;
+    }
+    moloch_session_add_protocol(session, "isakmp");
+ }
+/******************************************************************************/
+void aruba_papi_udp_classify(MolochSession_t *session, const unsigned char *data, int len, int UNUSED(which), void *UNUSED(uw))
+{
+    if (len < 20 || data[0] != 0x49 || data[1] != 0x72) {
+        return;
+    }
+    moloch_session_add_protocol(session, "aruba-papi");
+}
+/******************************************************************************/
 #define PARSERS_CLASSIFY_BOTH(_name, _uw, _offset, _str, _len, _func) \
     moloch_parsers_classifier_register_tcp(_name, _uw, _offset, (unsigned char*)_str, _len, _func); \
     moloch_parsers_classifier_register_udp(_name, _uw, _offset, (unsigned char*)_str, _len, _func);
@@ -226,6 +258,10 @@ void moloch_parser_init()
 {
     moloch_parsers_classifier_register_tcp("bt", "bittorrent", 0, (unsigned char*)"\x13" "BitTorrent protocol", 20, misc_add_protocol_classify);
     moloch_parsers_classifier_register_tcp("bt", "bittorrent", 0, (unsigned char*)"BSYNC\x00", 6, misc_add_protocol_classify);
+    /* Bitcoin main network */
+    moloch_parsers_classifier_register_tcp("bitcoin", "bitcoin", 0, (unsigned char*)"\xf9\xbe\xb4\xd9", 4, misc_add_protocol_classify);
+    /* Bitcoin namecoin fork */
+    moloch_parsers_classifier_register_tcp("bitcoin", "bitcoin", 0, (unsigned char*)"\xf9\xbe\xb4\xfe", 4, misc_add_protocol_classify);
     moloch_parsers_classifier_register_tcp("rdp", NULL, 0, (unsigned char*)"\x03\x00", 2, rdp_classify);
     moloch_parsers_classifier_register_tcp("imap", NULL, 0, (unsigned char*)"* OK ", 5, imap_classify);
     moloch_parsers_classifier_register_tcp("pop3", "pop3", 0, (unsigned char*)"+OK POP3 ", 9, misc_add_protocol_classify);
@@ -268,6 +304,7 @@ void moloch_parser_init()
     moloch_parsers_classifier_register_udp("ntp", NULL, 0, (unsigned char*)"\x1a", 1, ntp_classify);
     moloch_parsers_classifier_register_udp("ntp", NULL, 0, (unsigned char*)"\x1b", 1, ntp_classify);
     moloch_parsers_classifier_register_udp("ntp", NULL, 0, (unsigned char*)"\x1c", 1, ntp_classify);
+    moloch_parsers_classifier_register_udp("ntp", NULL, 0, (unsigned char*)"\x21", 1, ntp_classify);
     moloch_parsers_classifier_register_udp("ntp", NULL, 0, (unsigned char*)"\x23", 1, ntp_classify);
     moloch_parsers_classifier_register_udp("ntp", NULL, 0, (unsigned char*)"\x24", 1, ntp_classify);
     moloch_parsers_classifier_register_udp("ntp", NULL, 0, (unsigned char*)"\xd9", 1, ntp_classify);
@@ -300,6 +337,7 @@ void moloch_parser_init()
     moloch_parsers_classifier_register_tcp("nsclient", "nsclient", 0, (unsigned char*)"None&", 5, misc_add_protocol_classify);
 
     moloch_parsers_classifier_register_udp("ssdp", "ssdp", 0, (unsigned char*)"M-SEARCH ", 9, misc_add_protocol_classify);
+    moloch_parsers_classifier_register_udp("ssdp", "ssdp", 0, (unsigned char*)"NOTIFY * ", 9, misc_add_protocol_classify);
 
     moloch_parsers_classifier_register_tcp("zabbix", "zabbix", 0, (unsigned char*)"ZBXD\x01", 5, misc_add_protocol_classify);
 
@@ -336,6 +374,15 @@ void moloch_parser_init()
     moloch_parsers_classifier_register_udp("rip", NULL, 0, (unsigned char*)"\x02\x02\x00\x00", 4, rip_classify);
 
     moloch_parsers_classifier_register_tcp("nzsql", "nzsql", 0, (unsigned char*)"\x00\x00\x00\x08\x00\x01\x00\x03", 8, misc_add_protocol_classify);
+
+    moloch_parsers_classifier_register_port("dhcpv6",  NULL, 547, MOLOCH_PARSERS_PORT_UDP, dhcpv6_udp_classify);
+    moloch_parsers_classifier_register_port("dhcp",  NULL, 67, MOLOCH_PARSERS_PORT_UDP, dhcp_udp_classify);
+
+    moloch_parsers_classifier_register_tcp("splunk", "splunk", 0, (unsigned char*)"--splunk-cooked-mode-v3--", 25, misc_add_protocol_classify);
+
+    moloch_parsers_classifier_register_port("isakmp",  NULL, 500, MOLOCH_PARSERS_PORT_UDP, isakmp_udp_classify);
+
+    moloch_parsers_classifier_register_port("aruba-papi",  NULL, 8211, MOLOCH_PARSERS_PORT_UDP, aruba_papi_udp_classify);
 
     userField = moloch_field_by_db("user");
 }
