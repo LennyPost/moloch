@@ -177,7 +177,11 @@ function getHealth(cluster) {
         return resolve();
       }
 
-      if (health) { cluster.status = health.status; }
+      if (health) {
+        cluster.status      = health.status;
+        cluster.totalNodes  = health.number_of_nodes;
+        cluster.dataNodes   = health.number_of_data_nodes;
+      }
 
       return resolve();
     })
@@ -531,12 +535,16 @@ router.put('/groups/:groupId/clusters/:clusterId', verifyToken, (req, res, next)
     if (group.id === parseInt(req.params.groupId)) {
       for (let cluster of group.clusters) {
         if (cluster.id === parseInt(req.params.clusterId)) {
-          cluster.title       = req.body.title;
-          cluster.description = req.body.description;
-          cluster.url         = req.body.url;
-          cluster.localUrl    = req.body.localUrl;
-          cluster.multiviewer = req.body.multiviewer;
-          cluster.disabled    = req.body.disabled;
+          cluster.title         = req.body.title;
+          cluster.description   = req.body.description;
+          cluster.url           = req.body.url;
+          cluster.localUrl      = req.body.localUrl;
+          cluster.multiviewer   = req.body.multiviewer;
+          cluster.disabled      = req.body.disabled;
+          cluster.hideDeltaBPS  = req.body.hideDeltaBPS;
+          cluster.hideDataNodes = req.body.hideDataNodes;
+          cluster.hideDeltaTDPS = req.body.hideDeltaTDPS;
+          cluster.hideTotalNodes= req.body.hideTotalNodes;
           foundCluster = true;
           break;
         }

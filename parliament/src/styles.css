@@ -15,3 +15,12 @@ a.no-href       { color: #007bff; }
 a.no-href:hover { color: #0056b3; }
 
 .text-muted-more{ color: #dddddd; }
+
+.alert.alert-sm  {
+  font-size: .85rem;
+  padding: .25rem .5rem;
+  margin-bottom: .5rem;
+}
+.alert.alert-sm > .close {
+  line-height: .75;
+}

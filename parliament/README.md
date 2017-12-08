@@ -73,9 +73,69 @@ To get more help on the Angular CLI use `ng help` or go check out the [Angular C
 
 
 ### Contributing
+
 Before submitting a pull request with your contribution, execute both `npm run tslint` and `npm run jslint`, and correct any errors. The first command runs [tslint][tslint], a static code analysis tool that checks TypeScript code for readability, maintainability, and functionality errors (for client code). The second runs [jshint][jshint], another static code analysis tool for checking if JavaScript source code complies with coding rules (for server code).
 
 :octocat: Please use a fork to submit a [pull request](https://help.github.com/articles/creating-a-pull-request/) for your contribution.
+
+
+### Parliament Definition
+parliament.json (or whatever you pass into the --file flag when starting Parliament) is the file that describes your parliament. You can create this by hand or use the Parliament UI to create, edit, and delete groups and clusters. View the supplied parliament.example.json to view an example parliament configuration.
+
+**Parliament model:**
+```javascript
+{                 // parliament object
+  version: x,     // version (number)
+  groups: [ ... ] // list of groups in the parliament
+}
+```
+**Group model:**
+```javascript
+{                                   // group object
+  title: 'Group Title',             // group title (string, *required)
+  description: 'Group description', // group description (string)
+  clusters: [ ... ]                 // list of clusters in the group
+}
+```
+**Cluster model:**
+```javascript
+{ // cluster object
+
+  // cluster title (string, *required)
+  title: 'Cluster title',
+
+  // cluster description (string)
+  description: 'Cluster description',
+
+  // cluster external url for links in the UI (string, *required)
+  url: 'https://somewhere.com',
+
+  // cluster local url for fetching health/stats data (string, defaults to url if not supplied)
+  localUrl: 'https://localhost:port',
+
+  // whether the cluster is offline (boolean, defaults to false)
+  // requests will not be made for health and stats for a disabled cluster
+  disabled: false,
+
+  // whether the cluster is a multiviewer (boolean, defaults to false)
+  // requests will not be made for stats for a multiviewer
+  multiviewer: false,
+
+  // whether to hide delta bytes per second stats (defaults to false)
+  hideDeltaBPS: false,
+
+  // whether to hide delta packet drops per second (defaults to false)
+  hideDeltaTDPS: false,
+
+  // whether to hide number of nodes (defaults to false)
+  hideDataNodes: false,
+
+  // whether to hide the total number of nodes (defaults to false)
+  hideTotalNodes: false
+
+}
+```
+
 
 
 ### Directory Layout

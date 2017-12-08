@@ -410,12 +410,16 @@ export class ParliamentComponent implements OnInit {
     }
 
     const updatedCluster = {
-      title       : cluster.newTitle,
-      description : cluster.newDescription,
-      url         : cluster.newUrl,
-      localUrl    : cluster.newLocalUrl,
-      multiviewer : cluster.newMultiviewer,
-      disabled    : cluster.newDisabled
+      title         : cluster.newTitle,
+      description   : cluster.newDescription,
+      url           : cluster.newUrl,
+      localUrl      : cluster.newLocalUrl,
+      multiviewer   : cluster.newMultiviewer,
+      disabled      : cluster.newDisabled,
+      hideDeltaBPS  : cluster.hideDeltaBPS,
+      hideDataNodes : cluster.hideDataNodes,
+      hideDeltaTDPS : cluster.hideDeltaTDPS,
+      hideTotalNodes: cluster.hideTotalNodes
     };
 
     this.parliamentService.editCluster(group.id, cluster.id, updatedCluster)
