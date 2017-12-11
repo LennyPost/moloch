@@ -22,5 +22,3 @@ config.dev.ini
 .DS_Store
 bundle/
 .idea
-parliament.json
-parliament.dev.json
