@@ -283,18 +283,30 @@ function getStats(cluster) {
       }
 
       // Look for issues
-      cluster.issues = [];
+      if (!cluster.issues) { cluster.issues = {}; }
       for (let stat of stats.data) {
         if ((Date.now()/1000 - stat.currentTime) > 30) {
-          cluster.issues.push({type: "outOfDate", node: stat.nodeName, value: Math.round(Date.now()/1000 - stat.currentTime)});
+          cluster.issues.outOfDate = {
+            node    : stat.nodeName,
+            value   : Math.round(Date.now()/1000 - stat.currentTime),
+            severity: 'red'
+          };
         }
 
         if (stat.deltaPacketsPerSec === 0) {
-          cluster.issues.push({type: "noPackets", node: stat.nodeName, value: 0});
+          cluster.issues.noPackets = {
+            node    : stat.nodeName,
+            value   : 0,
+            severity: 'yellow'
+          };
         }
 
         if (stat.deltaESDroppedPerSec > 0) {
-          cluster.issues.push({type: "esDropped", node: stat.nodeName, value: stat.deltaESDroppedPerSec});
+          cluster.issues.esDropped = {
+            node    : stat.nodeName,
+            value   : stat.deltaESDroppedPerSec,
+            severity: 'yellow'
+          };
         }
       }
 
@@ -323,7 +335,7 @@ function initalizeParliament() {
       }
     }
 
-    let json = JSON.stringify(parliament);
+    let json = JSON.stringify(parliament, null, 2);
     fs.writeFile(app.get('file'), json, 'utf8',
       (err) => {
         if (err) {
@@ -360,6 +372,9 @@ function updateParliament() {
 
     Promise.all(promises)
       .then(() => {
+        // save the data
+        let json = JSON.stringify(parliamentWithData, null, 2);
+        fs.writeFile(app.get('file'), json, 'utf8');
         return resolve();
       })
       .catch((error) => {
@@ -647,6 +662,37 @@ router.put('/groups/:groupId/clusters/:clusterId', verifyToken, (req, res, next)
 
   let successObj  = { success:true, text: 'Successfully updated the requested cluster.' };
   let errorText   = 'Unable to update that cluster in your parliament.';
+  writeParliament(req, res, next, successObj, errorText);
+});
+
+// Dismiss an issue with a cluster
+router.put('/groups/:groupId/clusters/:clusterId/issues/:type/dismiss', (req, res, next) => {
+  let foundAlert = false;
+  for(let group of parliament.groups) {
+    if (group.id === parseInt(req.params.groupId)) {
+      for (let cluster of group.clusters) {
+        if (cluster.id === parseInt(req.params.clusterId)) {
+          if (cluster.issues) {
+            let alert = cluster.issues[req.params.type];
+            if (alert) {
+              alert.dismissed = Date.now()/1000;
+              foundAlert = true;
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  if (!foundAlert) {
+    const error = new Error('Unable to find alert to dismiss.');
+    error.httpStatusCode = 500;
+    return next(error);
+  }
+
+  let successObj  = { success:true, text:'Successfully dismissed the requested alert for 24 hours.' };
+  let errorText   = 'Unable to dismiss that alert.';
   writeParliament(req, res, next, successObj, errorText);
 });
 

@@ -408,11 +408,28 @@
                   </div>
                 </div>
               </small> <!-- /cluster stats -->
+              <!-- cluster issues -->
+              <small *ngIf="cluster.issues">
+                <!-- TODO put this list elsewhere (maybe comes from server?) -->
+                <span *ngFor="let key of ['test','outOfDate','noPackets','esDropped']">
+                  <div *ngIf="cluster.issues[key] && !cluster.issues[key].dismissed"
+                    class="alert alert-sm" [ngClass]="{'alert-warning':cluster.issues[key].severity==='yellow','alert-danger':cluster.issues[key].severity==='red'}">
+                    <span class="fa fa-exclamation-triangle"></span>&nbsp;
+                    {{ cluster.issues[key].node }}: {{ key }}
+                    <button type="button" class="close cursor-pointer"
+                      placement="left" ngbTooltip="Dismiss this alert for 24 hours"
+                      (click)="dismissIssue(group.id, cluster.id, cluster.issues[key], key)">
+                      <span>&times;</span>
+                    </button>
+                  </div>
+                </span>
+              </small> <!-- /cluster issues -->
               <!-- cluster stats error -->
-              <small *ngIf="!cluster.multiviewer && cluster.statsError">
-                <span class="fa fa-exclamation-triangle text-danger"></span>&nbsp;
-                <em class="text-danger">{{ cluster.statsError }}</em>
-              </small> <!-- cluster stats error -->
+              <div *ngIf="!cluster.multiviewer && cluster.statsError"
+                class="small alert alert-sm alert-danger">
+                <span class="fa fa-exclamation-triangle"></span>&nbsp;
+                {{ cluster.statsError }}
+              </div> <!-- cluster stats error -->
               <!-- edit cluster -->
               <div *ngIf="cluster.showEditClusterForm && auth.hasAuth" class="small">
                 <hr class="mt-2">

@@ -41,4 +41,8 @@ export class ParliamentService {
   updateClusterOrder(reorderedParliament): Observable<Response> {
     return this.http.put<Response>(`api/parliament`, { reorderedParliament: reorderedParliament });
   }
+
+  dismissIssue(groupId, clusterId, issueType): Observable<Response> {
+    return this.http.put<Response>(`api/groups/${groupId}/clusters/${clusterId}/issues/${issueType}/dismiss`, {});
+  }
 }

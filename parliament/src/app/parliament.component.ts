@@ -555,4 +555,24 @@ export class ParliamentComponent implements OnInit {
     this.stopAutoRefresh();
   }
 
+  /**
+   * Sends a request to dismiss an issue within a cluster
+   * If succesful, updates the cluster in the view, otherwise displays error
+   * @param {int} groupId - the id of the group
+   * @param {int} clusterId - the id of the cluster
+   * @param {object} issue - the issue to be dismissed
+   * @param {string} issueType - the type (key) of the issue to be dismissed
+   */
+  dismissIssue(groupId, clusterId, issue, issueType) {
+    this.parliamentService.dismissIssue(groupId, clusterId, issueType)
+      .subscribe(
+        (data) => {
+          issue.dismissed = true;
+        },
+        (err) => {
+          this.error = err.error.text || 'Unable to dismiss this alert';
+        }
+      );
+  }
+
 }
