@@ -104,8 +104,6 @@ try {
   parliament = { version:version, groups:[] };
 }
 
-// clone the parliament to add stats and health to it
-let parliamentWithData = JSON.parse(JSON.stringify(parliament));
 // define ids for groups and clusters
 let groupId = 0, clusterId = 0;
 // create timeout for updating the parliament data on an interval
@@ -136,7 +134,7 @@ router.use(bp.urlencoded({ extended: true }));
 /* Middleware -------------------------------------------------------------- */
 // App should always have parliament data
 router.use((req, res, next) => {
-  if (!parliamentWithData) {
+  if (!parliament) {
     const error = new Error('Unable to fetch parliament data.');
     error.httpStatusCode = 500;
     return next(error);
@@ -222,14 +220,33 @@ function getHealth(cluster) {
         cluster.status      = health.status;
         cluster.totalNodes  = health.number_of_nodes;
         cluster.dataNodes   = health.number_of_data_nodes;
+
+        if (cluster.status === 'red') { // alert on red es status
+          if (!cluster.issues) { cluster.issues = {}; }
+          if (!cluster.issues.esRed || !cluster.issues.esRed.dismissed) {
+            cluster.issues.esRed = {
+              title   : 'ES is red',
+              severity: 'red'
+            };
+          }
+        }
       }
 
       return resolve();
     })
     .catch((error) => {
       let message = error.message || error;
+
+      if (!cluster.issues) { cluster.issues = {}; }
+      if (!cluster.issues.esDown || !cluster.issues.esDown.dismissed) {
+        cluster.issues.esDown = {
+          title   : 'ES is unreachable',
+          value   : message,
+          severity: 'red'
+        };
+      }
+
       console.error('HEALTH ERROR:', message);
-      cluster.healthError = message;
       return resolve();
     });
 
@@ -286,27 +303,36 @@ function getStats(cluster) {
       if (!cluster.issues) { cluster.issues = {}; }
       for (let stat of stats.data) {
         if ((Date.now()/1000 - stat.currentTime) > 30) {
-          cluster.issues.outOfDate = {
-            node    : stat.nodeName,
-            value   : Math.round(Date.now()/1000 - stat.currentTime),
-            severity: 'red'
-          };
+          if (!cluster.issues.outOfDate || !cluster.issues.outOfDate.dismissed) {
+            cluster.issues.outOfDate = {
+              title   : 'Out of date',
+              node    : stat.nodeName,
+              value   : Math.round(Date.now()/1000 - stat.currentTime),
+              severity: 'red'
+            };
+          }
         }
 
         if (stat.deltaPacketsPerSec === 0) {
-          cluster.issues.noPackets = {
-            node    : stat.nodeName,
-            value   : 0,
-            severity: 'yellow'
-          };
+          if (!cluster.issues.noPackets || !cluster.issues.noPackets.dismissed) {
+            cluster.issues.noPackets = {
+              title   : 'No packets',
+              node    : stat.nodeName,
+              value   : 0,
+              severity: 'yellow'
+            };
+          }
         }
 
         if (stat.deltaESDroppedPerSec > 0) {
-          cluster.issues.esDropped = {
-            node    : stat.nodeName,
-            value   : stat.deltaESDroppedPerSec,
-            severity: 'yellow'
-          };
+          if (!cluster.issues.esDropped || !cluster.issues.esDropped.dismissed) {
+            cluster.issues.esDropped = {
+              title   : 'ES dropped',
+              node    : stat.nodeName,
+              value   : stat.deltaESDroppedPerSec,
+              severity: 'yellow'
+            };
+          }
         }
       }
 
@@ -335,15 +361,13 @@ function initalizeParliament() {
       }
     }
 
-    let json = JSON.stringify(parliament, null, 2);
-    fs.writeFile(app.get('file'), json, 'utf8',
+    fs.writeFile(app.get('file'), JSON.stringify(parliament, null, 2), 'utf8',
       (err) => {
         if (err) {
           console.error('Parliament initialization error:', err.message || err);
           return reject();
         }
 
-        parliamentWithData = JSON.parse(JSON.stringify(parliament));
         return resolve();
       }
     );
@@ -355,7 +379,7 @@ function initalizeParliament() {
 function updateParliament() {
   return new Promise((resolve, reject) => {
     let promises = [];
-    for (let group of parliamentWithData.groups) {
+    for (let group of parliament.groups) {
       if (group.clusters) {
         for (let cluster of group.clusters) {
           // only get health for online clusters
@@ -372,9 +396,8 @@ function updateParliament() {
 
     Promise.all(promises)
       .then(() => {
-        // save the data
-        let json = JSON.stringify(parliamentWithData, null, 2);
-        fs.writeFile(app.get('file'), json, 'utf8');
+        // save the data created after updating the parliament
+        fs.writeFile(app.get('file'), JSON.stringify(parliament, null, 2), 'utf8');
         return resolve();
       })
       .catch((error) => {
@@ -398,13 +421,11 @@ function writeParliament(req, res, next, successObj, errorText, sendParliament) 
         return next(error);
       }
 
-      parliamentWithData = JSON.parse(JSON.stringify(parliament));
-
       updateParliament()
         .then(() => {
           // send the updated parliament with the response
           if (sendParliament && successObj.parliament) {
-            successObj.parliament = parliamentWithData;
+            successObj.parliament = parliament;
           }
           return res.json(successObj);
         })
@@ -413,7 +434,6 @@ function writeParliament(req, res, next, successObj, errorText, sendParliament) 
           error.httpStatusCode = 500;
           return next(error);
         });
-
     }
   );
 }
@@ -457,7 +477,7 @@ router.get('/auth', (req, res, next) => {
 
 // Get parliament with stats
 router.get('/parliament', (req, res, next) => {
-  return res.json(parliamentWithData);
+  return res.json(parliament);
 });
 
 // Updates the parliament order of clusters and groups
@@ -587,7 +607,7 @@ router.post('/groups/:id/clusters', verifyToken, (req, res, next) => {
   let successObj  = {
     success   : true,
     cluster   : newCluster,
-    parliament: parliamentWithData,
+    parliament: parliament,
     text      : 'Successfully added the requested cluster.'
   };
   let errorText   = 'Unable to add that cluster to the parliament.';
@@ -675,7 +695,7 @@ router.put('/groups/:groupId/clusters/:clusterId/issues/:type/dismiss', (req, re
           if (cluster.issues) {
             let alert = cluster.issues[req.params.type];
             if (alert) {
-              alert.dismissed = Date.now()/1000;
+              alert.dismissed = Date.now();
               foundAlert = true;
               break;
             }
@@ -693,6 +713,37 @@ router.put('/groups/:groupId/clusters/:clusterId/issues/:type/dismiss', (req, re
 
   let successObj  = { success:true, text:'Successfully dismissed the requested alert for 24 hours.' };
   let errorText   = 'Unable to dismiss that alert.';
+  writeParliament(req, res, next, successObj, errorText);
+});
+
+// Allow an issue with a cluster to alert
+router.put('/groups/:groupId/clusters/:clusterId/issues/:type/allow', (req, res, next) => {
+  let foundAlert = false;
+  for(let group of parliament.groups) {
+    if (group.id === parseInt(req.params.groupId)) {
+      for (let cluster of group.clusters) {
+        if (cluster.id === parseInt(req.params.clusterId)) {
+          if (cluster.issues) {
+            let alert = cluster.issues[req.params.type];
+            if (alert) {
+              alert.dismissed = undefined;
+              foundAlert = true;
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  if (!foundAlert) {
+    const error = new Error('Unable to find alert to allow.');
+    error.httpStatusCode = 500;
+    return next(error);
+  }
+
+  let successObj  = { success:true, text:'Successfully allowed the requested alert.' };
+  let errorText   = 'Unable to allow that alert.';
   writeParliament(req, res, next, successObj, errorText);
 });
 

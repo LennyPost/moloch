@@ -411,11 +411,12 @@
               <!-- cluster issues -->
               <small *ngIf="cluster.issues">
                 <!-- TODO put this list elsewhere (maybe comes from server?) -->
-                <span *ngFor="let key of ['test','outOfDate','noPackets','esDropped']">
+                <span *ngFor="let key of ['test','outOfDate','noPackets','esDropped','esDown','esRed']">
                   <div *ngIf="cluster.issues[key] && !cluster.issues[key].dismissed"
                     class="alert alert-sm" [ngClass]="{'alert-warning':cluster.issues[key].severity==='yellow','alert-danger':cluster.issues[key].severity==='red'}">
                     <span class="fa fa-exclamation-triangle"></span>&nbsp;
-                    {{ cluster.issues[key].node }}: {{ key }}
+                    <span *ngIf="cluster.issues[key].node">{{ cluster.issues[key].node }}</span>
+                    {{ cluster.issues[key].title }}<span *ngIf="cluster.issues[key].value !== undefined">: {{ cluster.issues[key].value }}</span>
                     <button type="button" class="close cursor-pointer"
                       placement="left" ngbTooltip="Dismiss this alert for 24 hours"
                       (click)="dismissIssue(group.id, cluster.id, cluster.issues[key], key)">

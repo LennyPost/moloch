@@ -45,4 +45,8 @@ export class ParliamentService {
   dismissIssue(groupId, clusterId, issueType): Observable<Response> {
     return this.http.put<Response>(`api/groups/${groupId}/clusters/${clusterId}/issues/${issueType}/dismiss`, {});
   }
+
+  allowAlert(groupId, clusterId, issueType): Observable<Response> {
+    return this.http.put<Response>(`api/groups/${groupId}/clusters/${clusterId}/issues/${issueType}/allow`, {});
+  }
 }
