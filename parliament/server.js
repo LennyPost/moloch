@@ -194,6 +194,50 @@ function verifyToken(req, res, next) {
 
 
 /* Helper functions -------------------------------------------------------- */
+// TODO alert stuffs!
+function issueAlert(cluster, issue) {
+  issue.alerted = Date.now();
+  console.log(`Alert issued for: ${cluster.title} - ${issue.type}`);
+}
+
+// Updates an existing issue or pushes a new issue onto the issue array
+function setIssue(cluster, newIssue) {
+  if (!cluster.issues) { cluster.issues = []; }
+
+  for (let issue of cluster.issues) {
+    if (issue.type === newIssue.type && issue.node === newIssue.node) {
+      if (issue.dismissed && (Date.now() - issue.lastNoticed > 30000)) { // TODO configurable threshold?
+        // issue was dismissed, but exceeded the threshold,
+        // so it's really a new issue
+        issue.alerted       = undefined;
+        issue.dismissed     = undefined;
+        issue.firstNoticed  = Date.now();
+      }
+
+      if (Date.now() > issue.ignoreUntil) {
+        // the ignore has expired, so alert!
+        issue.ignoreUntil = undefined;
+        issue.alerted     = undefined;
+      }
+
+      issue.lastNoticed = Date.now();
+
+      if (!issue.dismissed && !issue.ignoreUntil && !issue.alerted) {
+        issueAlert(cluster, issue);
+      }
+
+      return;
+    }
+  }
+
+  newIssue.firstNoticed = Date.now();
+  cluster.issues.push(newIssue);
+
+  issueAlert(cluster, cluster.issues[cluster.issues.length-1]);
+
+  return;
+}
+
 // Retrieves the health of each cluster and updates the cluster with that info
 function getHealth(cluster) {
   return new Promise((resolve, reject) => {
@@ -222,13 +266,11 @@ function getHealth(cluster) {
         cluster.dataNodes   = health.number_of_data_nodes;
 
         if (cluster.status === 'red') { // alert on red es status
-          if (!cluster.issues) { cluster.issues = {}; }
-          if (!cluster.issues.esRed || !cluster.issues.esRed.dismissed) {
-            cluster.issues.esRed = {
-              title   : 'ES is red',
-              severity: 'red'
-            };
-          }
+          setIssue(cluster, {
+            type    : 'esRed',
+            title   : 'ES is red',
+            severity: 'red'
+          });
         }
       }
 
@@ -237,14 +279,14 @@ function getHealth(cluster) {
     .catch((error) => {
       let message = error.message || error;
 
-      if (!cluster.issues) { cluster.issues = {}; }
-      if (!cluster.issues.esDown || !cluster.issues.esDown.dismissed) {
-        cluster.issues.esDown = {
-          title   : 'ES is unreachable',
-          value   : message,
-          severity: 'red'
-        };
-      }
+      setIssue(cluster, {
+        type    : 'esDown',
+        title   : 'ES is unreachable',
+        text    : message,
+        severity: 'red'
+      });
+
+      cluster.healthError = message;
 
       console.error('HEALTH ERROR:', message);
       return resolve();
@@ -300,39 +342,35 @@ function getStats(cluster) {
       }
 
       // Look for issues
-      if (!cluster.issues) { cluster.issues = {}; }
       for (let stat of stats.data) {
         if ((Date.now()/1000 - stat.currentTime) > 30) {
-          if (!cluster.issues.outOfDate || !cluster.issues.outOfDate.dismissed) {
-            cluster.issues.outOfDate = {
-              title   : 'Out of date',
-              node    : stat.nodeName,
-              value   : Math.round(Date.now()/1000 - stat.currentTime),
-              severity: 'red'
-            };
-          }
+          setIssue(cluster, {
+            type    : 'outOfDate',
+            title   : 'Out of date',
+            node    : stat.nodeName,
+            value   : Math.round(Date.now()/1000 - stat.currentTime),
+            severity: 'red'
+          });
         }
 
         if (stat.deltaPacketsPerSec === 0) {
-          if (!cluster.issues.noPackets || !cluster.issues.noPackets.dismissed) {
-            cluster.issues.noPackets = {
-              title   : 'No packets',
-              node    : stat.nodeName,
-              value   : 0,
-              severity: 'yellow'
-            };
-          }
+          setIssue(cluster, {
+            type    : 'noPackets',
+            title   : 'No packets',
+            node    : stat.nodeName,
+            value   : 0,
+            severity: 'yellow'
+          });
         }
 
         if (stat.deltaESDroppedPerSec > 0) {
-          if (!cluster.issues.esDropped || !cluster.issues.esDropped.dismissed) {
-            cluster.issues.esDropped = {
-              title   : 'ES dropped',
-              node    : stat.nodeName,
-              value   : stat.deltaESDroppedPerSec,
-              severity: 'yellow'
-            };
-          }
+          setIssue(cluster, {
+            type    : 'esDropped',
+            title   : 'ES dropped',
+            node    : stat.nodeName,
+            value   : stat.deltaESDroppedPerSec,
+            severity: 'yellow'
+          });
         }
       }
 
@@ -341,6 +379,14 @@ function getStats(cluster) {
     .catch((error) => {
       let message = error.message || error;
       console.error('STATS ERROR:', message);
+
+      setIssue(cluster, {
+        type    : 'esDown',
+        title   : 'ES is unreachable',
+        text    : message,
+        severity: 'red'
+      });
+
       cluster.statsError = message;
       return resolve();
     });
@@ -686,18 +732,28 @@ router.put('/groups/:groupId/clusters/:clusterId', verifyToken, (req, res, next)
 });
 
 // Dismiss an issue with a cluster
-router.put('/groups/:groupId/clusters/:clusterId/issues/:type/dismiss', (req, res, next) => {
-  let foundAlert = false;
+router.put('/groups/:groupId/clusters/:clusterId/dismissIssue', (req, res, next) => {
+  if (!req.body.type) {
+    let message = 'Must specify the issue type to dismiss.';
+    const error = new Error(message);
+    error.httpStatusCode = 422;
+    return next(error);
+  }
+
+  let now = Date.now();
+
+  let foundIssue = false;
   for(let group of parliament.groups) {
     if (group.id === parseInt(req.params.groupId)) {
       for (let cluster of group.clusters) {
         if (cluster.id === parseInt(req.params.clusterId)) {
           if (cluster.issues) {
-            let alert = cluster.issues[req.params.type];
-            if (alert) {
-              alert.dismissed = Date.now();
-              foundAlert = true;
-              break;
+            for (let issue of cluster.issues) {
+              if (issue.type === req.body.type && issue.node === req.body.node) {
+                issue.dismissed = now;
+                foundIssue = true;
+                break;
+              }
             }
           }
         }
@@ -705,20 +761,62 @@ router.put('/groups/:groupId/clusters/:clusterId/issues/:type/dismiss', (req, re
     }
   }
 
-  if (!foundAlert) {
-    const error = new Error('Unable to find alert to dismiss.');
+  if (!foundIssue) {
+    const error = new Error('Unable to find issue to dismiss.');
     error.httpStatusCode = 500;
     return next(error);
   }
 
-  let successObj  = { success:true, text:'Successfully dismissed the requested alert for 24 hours.' };
-  let errorText   = 'Unable to dismiss that alert.';
+  let successObj  = { success:true, text:'Successfully dismissed the requested issue.', dismissed:now };
+  let errorText   = 'Unable to dismiss that issue.';
+  writeParliament(req, res, next, successObj, errorText);
+});
+
+// TODO this endpoint has a lot in commong with /dismissIssue
+// Ignore an issue with a cluster
+router.put('/groups/:groupId/clusters/:clusterId/ignoreIssue', (req, res, next) => {
+  if (!req.body.type) {
+    let message = 'Must specify the issue type to ignore.';
+    const error = new Error(message);
+    error.httpStatusCode = 422;
+    return next(error);
+  }
+
+  let ignoreUntil = Date.now() + 30000; // TODO allow ignore until to be passed in
+
+  let foundIssue = false;
+  for(let group of parliament.groups) {
+    if (group.id === parseInt(req.params.groupId)) {
+      for (let cluster of group.clusters) {
+        if (cluster.id === parseInt(req.params.clusterId)) {
+          if (cluster.issues) {
+            for (let issue of cluster.issues) {
+              if (issue.type === req.body.type && issue.node === req.body.node) {
+                issue.ignoreUntil = ignoreUntil;
+                foundIssue = true;
+                break;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  if (!foundIssue) {
+    const error = new Error('Unable to find issue to ignore.');
+    error.httpStatusCode = 500;
+    return next(error);
+  }
+
+  let successObj  = { success:true, text:'Successfully ignored the requested issue.', ignoreUntil:ignoreUntil };
+  let errorText   = 'Unable to ignore that issue.';
   writeParliament(req, res, next, successObj, errorText);
 });
 
 // Allow an issue with a cluster to alert
 router.put('/groups/:groupId/clusters/:clusterId/issues/:type/allow', (req, res, next) => {
-  let foundAlert = false;
+  let foundIssue = false;
   for(let group of parliament.groups) {
     if (group.id === parseInt(req.params.groupId)) {
       for (let cluster of group.clusters) {
@@ -727,7 +825,7 @@ router.put('/groups/:groupId/clusters/:clusterId/issues/:type/allow', (req, res,
             let alert = cluster.issues[req.params.type];
             if (alert) {
               alert.dismissed = undefined;
-              foundAlert = true;
+              foundIssue = true;
               break;
             }
           }
@@ -736,14 +834,14 @@ router.put('/groups/:groupId/clusters/:clusterId/issues/:type/allow', (req, res,
     }
   }
 
-  if (!foundAlert) {
-    const error = new Error('Unable to find alert to allow.');
+  if (!foundIssue) {
+    const error = new Error('Unable to find issue to allow.');
     error.httpStatusCode = 500;
     return next(error);
   }
 
-  let successObj  = { success:true, text:'Successfully allowed the requested alert.' };
-  let errorText   = 'Unable to allow that alert.';
+  let successObj  = { success:true, text:'Successfully allowed the requested issue.' };
+  let errorText   = 'Unable to allow that issue.';
   writeParliament(req, res, next, successObj, errorText);
 });
 

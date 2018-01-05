@@ -42,11 +42,24 @@ export class ParliamentService {
     return this.http.put<Response>(`api/parliament`, { reorderedParliament: reorderedParliament });
   }
 
-  dismissIssue(groupId, clusterId, issueType): Observable<Response> {
-    return this.http.put<Response>(`api/groups/${groupId}/clusters/${clusterId}/issues/${issueType}/dismiss`, {});
+  dismissIssue(groupId, clusterId, issue): Observable<any> {
+    return this.http.put<Response>(
+      `api/groups/${groupId}/clusters/${clusterId}/dismissIssue`,
+      { type: issue.type, node: issue.node }
+    );
   }
 
-  allowAlert(groupId, clusterId, issueType): Observable<Response> {
-    return this.http.put<Response>(`api/groups/${groupId}/clusters/${clusterId}/issues/${issueType}/allow`, {});
+  ignoreIssue(groupId, clusterId, issue): Observable<any> {
+    return this.http.put<Response>(
+      `api/groups/${groupId}/clusters/${clusterId}/ignoreIssue`,
+      { type: issue.type, node: issue.node }
+    );
+  }
+
+  allowIssue(groupId, clusterId, issue): Observable<any> {
+    return this.http.put<Response>(
+      `api/groups/${groupId}/clusters/${clusterId}/allowIssue`,
+      { type: issue.type, node: issue.node }
+    );
   }
 }

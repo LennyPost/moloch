@@ -561,16 +561,34 @@ export class ParliamentComponent implements OnInit {
    * @param {int} groupId - the id of the group
    * @param {int} clusterId - the id of the cluster
    * @param {object} issue - the issue to be dismissed
-   * @param {string} issueType - the type (key) of the issue to be dismissed
    */
-  dismissIssue(groupId, clusterId, issue, issueType) {
-    this.parliamentService.dismissIssue(groupId, clusterId, issueType)
+  dismissIssue(groupId, clusterId, issue) {
+    this.parliamentService.dismissIssue(groupId, clusterId, issue)
       .subscribe(
         (data) => {
-          issue.dismissed = true;
+          issue.dismissed = data.dismissed;
         },
         (err) => {
-          this.error = err.error.text || 'Unable to dismiss this alert';
+          this.error = err.error.text || 'Unable to dismiss this issue';
+        }
+      );
+  }
+
+  /**
+   * Sends a request to ignore an issue within a cluster
+   * If succesful, updates the cluster in the view, otherwise displays error
+   * @param {int} groupId - the id of the group
+   * @param {int} clusterId - the id of the cluster
+   * @param {object} issue - the issue to be ignored
+   */
+  ignoreIssue(groupId, clusterId, issue) {
+    this.parliamentService.ignoreIssue(groupId, clusterId, issue)
+      .subscribe(
+        (data) => {
+          issue.ignoreUntil = data.ignoreUntil;
+        },
+        (err) => {
+          this.error = err.error.text || 'Unable to ignore this issue';
         }
       );
   }

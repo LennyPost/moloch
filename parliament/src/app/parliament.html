@@ -410,27 +410,26 @@
               </small> <!-- /cluster stats -->
               <!-- cluster issues -->
               <small *ngIf="cluster.issues">
-                <!-- TODO put this list elsewhere (maybe comes from server?) -->
-                <span *ngFor="let key of ['test','outOfDate','noPackets','esDropped','esDown','esRed']">
-                  <div *ngIf="cluster.issues[key] && !cluster.issues[key].dismissed"
-                    class="alert alert-sm" [ngClass]="{'alert-warning':cluster.issues[key].severity==='yellow','alert-danger':cluster.issues[key].severity==='red'}">
+                <span *ngFor="let issue of cluster.issues">
+                  <div *ngIf="!issue.dismissed && !issue.ignoreUntil" class="alert alert-sm"
+                    [ngClass]="{'alert-warning':issue.severity==='yellow','alert-danger':issue.severity==='red'}">
                     <span class="fa fa-exclamation-triangle"></span>&nbsp;
-                    <span *ngIf="cluster.issues[key].node">{{ cluster.issues[key].node }}</span>
-                    {{ cluster.issues[key].title }}<span *ngIf="cluster.issues[key].value !== undefined">: {{ cluster.issues[key].value }}</span>
+                    <span *ngIf="issue.node">{{ issue.node }}</span>
+                    {{ issue.title }}<span *ngIf="issue.value !== undefined">: {{ issue.value }}</span>
+                    <!-- TODO this should be a dropdown of time values -->
                     <button type="button" class="close cursor-pointer"
-                      placement="left" ngbTooltip="Dismiss this alert for 24 hours"
-                      (click)="dismissIssue(group.id, cluster.id, cluster.issues[key], key)">
+                      placement="left" ngbTooltip="Ignore this issue"
+                      (click)="ignoreIssue(group.id, cluster.id, issue)">
                       <span>&times;</span>
+                    </button>
+                    <button type="button" class="close cursor-pointer"
+                      placement="left" ngbTooltip="Dismiss this issue"
+                      (click)="dismissIssue(group.id, cluster.id, issue)">
+                      <span>&#x02713;</span>
                     </button>
                   </div>
                 </span>
               </small> <!-- /cluster issues -->
-              <!-- cluster stats error -->
-              <div *ngIf="!cluster.multiviewer && cluster.statsError"
-                class="small alert alert-sm alert-danger">
-                <span class="fa fa-exclamation-triangle"></span>&nbsp;
-                {{ cluster.statsError }}
-              </div> <!-- cluster stats error -->
               <!-- edit cluster -->
               <div *ngIf="cluster.showEditClusterForm && auth.hasAuth" class="small">
                 <hr class="mt-2">
