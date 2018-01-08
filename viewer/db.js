@@ -35,7 +35,7 @@ var internals = {tagId2Name: {},
                  indicesCache: {},
                  usersCache: {},
                  qInProgress: 0,
-                 apiVersion: "2.4",
+                 apiVersion: "5.5",
                  q: []};
 
 exports.initialize = function (info, cb) {
@@ -148,7 +148,7 @@ exports.index = function (index, type, id, document, cb) {
 };
 
 exports.indexNow = function (index, type, id, document, cb) {
-  return internals.elasticSearchClient.index({index: fixIndex(index), type: type, body: document, id: id, refresh: 1}, cb);
+  return internals.elasticSearchClient.index({index: fixIndex(index), type: type, body: document, id: id, refresh: true}, cb);
 };
 
 exports.search = function (index, type, query, options, cb) {
@@ -256,7 +256,7 @@ exports.indexStats = function(index, cb) {
 };
 
 exports.getAliases = function(index, cb) {
-  return internals.elasticSearchClient.indices.getAliases({index: fixIndex(index)}, cb);
+  return internals.elasticSearchClient.indices.getAlias({index: fixIndex(index)}, cb);
 };
 
 exports.getAliasesCache = function (index, cb) {
@@ -289,6 +289,10 @@ exports.health = function(cb) {
 
 exports.indices = function(cb, index) {
   return internals.elasticSearchClient.cat.indices({format: "json", index: fixIndex(index)}, cb);
+};
+
+exports.shards = function(cb) {
+  return internals.elasticSearchClient.cat.shards({format: "json"}, cb);
 };
 
 exports.tasks = function(cb) {
@@ -378,12 +382,12 @@ exports.numberOfUsers = function(cb) {
 
 exports.deleteUser = function (name, cb) {
   delete internals.usersCache[name];
-  return internals.usersElasticSearchClient.delete({index: internals.usersPrefix + 'users', type: 'user', id: name, refresh: 1}, cb);
+  return internals.usersElasticSearchClient.delete({index: internals.usersPrefix + 'users', type: 'user', id: name, refresh: true}, cb);
 };
 
 exports.setUser = function(name, doc, cb) {
   delete internals.usersCache[name];
-  return internals.usersElasticSearchClient.index({index: internals.usersPrefix + 'users', type: 'user', body: doc, id: name, refresh: 1}, cb);
+  return internals.usersElasticSearchClient.index({index: internals.usersPrefix + 'users', type: 'user', body: doc, id: name, refresh: true}, cb);
 };
 
 function twoDigitString(value) {
@@ -397,7 +401,7 @@ exports.historyIt = function(doc, cb) {
     twoDigitString(d.getUTCFullYear()%100) + 'w' +
     twoDigitString(Math.floor((d - jan) / 604800000));
 
-  return internals.elasticSearchClient.index({index:iname, type:'history', body:doc, refresh:1}, cb);
+  return internals.elasticSearchClient.index({index:iname, type:'history', body:doc, refresh: true}, cb);
 };
 exports.searchHistory = function(query, cb) {
   return internals.elasticSearchClient.search({index:fixIndex('history_v1-*'), type:"history", body:query}, cb);
@@ -412,7 +416,7 @@ exports.numberOfLogs = function(cb) {
   });
 };
 exports.deleteHistoryItem = function (id, index, cb) {
-  return internals.elasticSearchClient.delete({index:index, type: 'history', id: id, refresh: 1}, cb);
+  return internals.elasticSearchClient.delete({index:index, type: 'history', id: id, refresh: true}, cb);
 };
 
 exports.molochNodeStats = function (name, cb) {
