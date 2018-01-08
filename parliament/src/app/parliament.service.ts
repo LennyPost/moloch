@@ -49,10 +49,10 @@ export class ParliamentService {
     );
   }
 
-  ignoreIssue(groupId, clusterId, issue): Observable<any> {
+  ignoreIssue(groupId, clusterId, issue, forMs): Observable<any> {
     return this.http.put<Response>(
       `api/groups/${groupId}/clusters/${clusterId}/ignoreIssue`,
-      { type: issue.type, node: issue.node }
+      { type: issue.type, node: issue.node, ms: forMs }
     );
   }
 

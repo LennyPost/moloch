@@ -30,6 +30,10 @@
   padding: 0.2rem 0.5rem;
 }
 
+.cluster-group .alert .btn-xs {
+  margin-top:-2px;
+}
+
 
 /* compact form for editing clusters */
 form.edit-cluster label {

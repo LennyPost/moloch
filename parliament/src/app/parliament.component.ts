@@ -580,9 +580,10 @@ export class ParliamentComponent implements OnInit {
    * @param {int} groupId - the id of the group
    * @param {int} clusterId - the id of the cluster
    * @param {object} issue - the issue to be ignored
+   * @param {number} forMs - the amount of time (in ms) that the issue should be ignored
    */
-  ignoreIssue(groupId, clusterId, issue) {
-    this.parliamentService.ignoreIssue(groupId, clusterId, issue)
+  ignoreIssue(groupId, clusterId, issue, forMs) {
+    this.parliamentService.ignoreIssue(groupId, clusterId, issue, forMs)
       .subscribe(
         (data) => {
           issue.ignoreUntil = data.ignoreUntil;

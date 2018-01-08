@@ -200,14 +200,35 @@ function issueAlert(cluster, issue) {
   console.log(`Alert issued for: ${cluster.title} - ${issue.type}`);
 }
 
+// Finds an issue in a cluster
+function findIssue(groupId, clusterId, issueType, node) {
+  for(let group of parliament.groups) {
+    if (group.id === groupId) {
+      for (let cluster of group.clusters) {
+        if (cluster.id === clusterId) {
+          if (cluster.issues) {
+            for (let issue of cluster.issues) {
+              if (issue.type === issueType && issue.node === node) {
+                return issue;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return;
+}
+
 // Updates an existing issue or pushes a new issue onto the issue array
 function setIssue(cluster, newIssue) {
   if (!cluster.issues) { cluster.issues = []; }
 
   for (let issue of cluster.issues) {
     if (issue.type === newIssue.type && issue.node === newIssue.node) {
-      if (issue.dismissed && (Date.now() - issue.lastNoticed > 30000)) { // TODO configurable threshold?
-        // issue was dismissed, but exceeded the threshold,
+      if (issue.dismissed && (Date.now() - issue.lastNoticed > 86400000)) {
+        // issue was dismissed, but exceeded the threshold (1 day),
         // so it's really a new issue
         issue.alerted       = undefined;
         issue.dismissed     = undefined;
@@ -742,37 +763,21 @@ router.put('/groups/:groupId/clusters/:clusterId/dismissIssue', (req, res, next)
 
   let now = Date.now();
 
-  let foundIssue = false;
-  for(let group of parliament.groups) {
-    if (group.id === parseInt(req.params.groupId)) {
-      for (let cluster of group.clusters) {
-        if (cluster.id === parseInt(req.params.clusterId)) {
-          if (cluster.issues) {
-            for (let issue of cluster.issues) {
-              if (issue.type === req.body.type && issue.node === req.body.node) {
-                issue.dismissed = now;
-                foundIssue = true;
-                break;
-              }
-            }
-          }
-        }
-      }
-    }
-  }
+  let issue = findIssue(parseInt(req.params.groupId), parseInt(req.params.clusterId), req.body.type, req.body.node);
 
-  if (!foundIssue) {
+  if (!issue) {
     const error = new Error('Unable to find issue to dismiss.');
     error.httpStatusCode = 500;
     return next(error);
   }
+
+  issue.dismissed = now;
 
   let successObj  = { success:true, text:'Successfully dismissed the requested issue.', dismissed:now };
   let errorText   = 'Unable to dismiss that issue.';
   writeParliament(req, res, next, successObj, errorText);
 });
 
-// TODO this endpoint has a lot in commong with /dismissIssue
 // Ignore an issue with a cluster
 router.put('/groups/:groupId/clusters/:clusterId/ignoreIssue', (req, res, next) => {
   if (!req.body.type) {
@@ -782,32 +787,18 @@ router.put('/groups/:groupId/clusters/:clusterId/ignoreIssue', (req, res, next) 
     return next(error);
   }
 
-  let ignoreUntil = Date.now() + 30000; // TODO allow ignore until to be passed in
+  let ms = req.body.ms || 3600000; // Default to 1 hour
+  let ignoreUntil = Date.now() + ms;
 
-  let foundIssue = false;
-  for(let group of parliament.groups) {
-    if (group.id === parseInt(req.params.groupId)) {
-      for (let cluster of group.clusters) {
-        if (cluster.id === parseInt(req.params.clusterId)) {
-          if (cluster.issues) {
-            for (let issue of cluster.issues) {
-              if (issue.type === req.body.type && issue.node === req.body.node) {
-                issue.ignoreUntil = ignoreUntil;
-                foundIssue = true;
-                break;
-              }
-            }
-          }
-        }
-      }
-    }
-  }
+  let issue = findIssue(parseInt(req.params.groupId), parseInt(req.params.clusterId), req.body.type, req.body.node);
 
-  if (!foundIssue) {
+  if (!issue) {
     const error = new Error('Unable to find issue to ignore.');
     error.httpStatusCode = 500;
     return next(error);
   }
+
+  issue.ignoreUntil = ignoreUntil;
 
   let successObj  = { success:true, text:'Successfully ignored the requested issue.', ignoreUntil:ignoreUntil };
   let errorText   = 'Unable to ignore that issue.';
