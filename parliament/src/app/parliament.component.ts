@@ -301,8 +301,9 @@ export class ParliamentComponent implements OnInit {
 
   // Fired when the user clicks enter on the password input
   passwordInputSubmit() {
-    if (this.updatingPassword) { this.updatePassword(); }
-    else { this.login(); }
+    if (this.updatingPassword) {
+      this.updatePassword();
+    } else { this.login(); }
   }
 
   // Fired when interval refresh select input is changed
