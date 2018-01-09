@@ -43,7 +43,7 @@ export class IssuesComponent implements OnInit {
   }
 
   /* page functions -------------------------------------------------------- */
-  getIssueRowClass(issue) {    
+  getIssueRowClass(issue) {
     if (issue.ignoreUntil) {
       return 'table-secondary text-muted';
     } else if (issue.severity === 'red') {

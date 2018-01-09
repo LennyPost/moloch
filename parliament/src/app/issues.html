@@ -35,11 +35,11 @@
   </thead>
   <tbody>
     <tr *ngFor="let issue of issues" [ngClass]="getIssueRowClass(issue)">
-      <td>{{issue.cluster}}</td>
-      <td>{{issue.title}}</td>
-      <td>{{issue.value | issueValue: issue.type}}</td>
-      <td>{{issue.node}}</td>
-      <td>{{issue.ignoreUntil | date: 'yyyy/MM/dd HH:mm:ss'}}</td>
+      <td>{{ issue.cluster }}</td>
+      <td>{{ issue.title }}</td>
+      <td>{{ issue.value | issueValue: issue.type }}</td>
+      <td>{{ issue.node }}</td>
+      <td>{{ issue.ignoreUntil | date: 'yyyy/MM/dd HH:mm:ss' }}</td>
       <td *ngIf="loggedIn">
         <!-- dismiss issue button -->
         <button type="button" class="btn btn-outline-danger btn-xs pull-right cursor-pointer ml-2"
