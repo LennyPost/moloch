@@ -9,7 +9,6 @@ import { Parliament } from './parliament';
 import { Auth, Login } from './auth';
 
 @Component({
-  selector    : 'app-root',
   templateUrl : './parliament.html',
   styleUrls   : [ './parliament.css' ],
   providers   : [ ParliamentService ],

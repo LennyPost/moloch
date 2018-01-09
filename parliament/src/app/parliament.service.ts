@@ -3,7 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 
 import { Observable } from 'rxjs/Observable';
 
-import { Parliament, GroupCreated, ClusterCreated, Response } from './parliament';
+import { Parliament, GroupCreated, ClusterCreated, Response, Issues } from './parliament';
 
 @Injectable()
 export class ParliamentService {
@@ -42,6 +42,10 @@ export class ParliamentService {
     return this.http.put<Response>(`api/parliament`, { reorderedParliament: reorderedParliament });
   }
 
+  getIssues(): Observable<Issues> {
+    return this.http.get<Issues>(`api/issues`);
+  }
+
   dismissIssue(groupId, clusterId, issue): Observable<any> {
     return this.http.put<Response>(
       `api/groups/${groupId}/clusters/${clusterId}/dismissIssue`,
@@ -56,9 +60,9 @@ export class ParliamentService {
     );
   }
 
-  allowIssue(groupId, clusterId, issue): Observable<any> {
+  removeIgnoreIssue(groupId, clusterId, issue): Observable<any> {
     return this.http.put<Response>(
-      `api/groups/${groupId}/clusters/${clusterId}/allowIssue`,
+      `api/groups/${groupId}/clusters/${clusterId}/removeIgnoreIssue`,
       { type: issue.type, node: issue.node }
     );
   }

@@ -67,9 +67,17 @@
               </select>
             </div>
           </span> <!-- /refresh interval select -->
-          <img src="public/header_logo.png" style="vertical-align:bottom;"> Moloch Parliament
+          <img src="public/header_logo.png" style="vertical-align:bottom;">
+          Moloch Parliament
         </h2>
-        <p class="lead">Do not taunt the Happy Moloch. Please use the Happy Moloch responsibly.</p>
+        <p class="lead">
+          <button class="btn btn-outline-info pull-right cursor-pointer"
+            placement="left" ngbTooltip="View and configure issue alerts"
+            routerLink="/issues">
+            <span class="fa fa-bell"></span>
+          </button>
+          Do not taunt the Happy Moloch. Please use the Happy Moloch responsibly.
+        </p>
       </div>
     </div> <!-- /page header -->
 
@@ -430,11 +438,11 @@
                     <!-- dismiss issue button -->
                     <button type="button" class="btn pull-right btn-outline-danger btn-xs cursor-pointer"
                       placement="left" ngbTooltip="Dismiss this issue for 24 hours"
-                      (click)="dismissIssue(group.id, cluster.id, issue)">
+                      (click)="dismissIssue(group.id, cluster.id, issue)" *ngIf="loggedIn">
                       <span class="fa fa-check"></span>
                     </button> <!-- /dismiss issue button -->
                     <!-- ignore until dropdown -->
-                    <div ngbDropdown class="pull-right mr-1 dropdown-sm">
+                    <div ngbDropdown placement="bottom-right" class="pull-right mr-1 dropdown-sm" *ngIf="loggedIn">
                       <button class="btn btn-outline-dark btn-xs cursor-pointer" ngbDropdownToggle>
                         <span class="fa fa-eye-slash"></span>
                       </button>

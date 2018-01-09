@@ -120,8 +120,9 @@ let timeout;
 
 app.disable('x-powered-by');
 
-// parliament app page
+// parliament app pages
 app.use('/parliament', express.static(`${__dirname}/dist/index.html`, { maxAge:600*1000 }));
+app.use('/parliament/issues', express.static(`${__dirname}/dist/index.html`, { maxAge:600*1000 }));
 
 // log requests
 app.use(logger('dev'));
@@ -312,7 +313,7 @@ function getHealth(cluster) {
       setIssue(cluster, {
         type    : 'esDown',
         title   : 'ES is unreachable',
-        text    : message,
+        value   : message,
         severity: 'red'
       });
 
@@ -413,9 +414,9 @@ function getStats(cluster) {
       setIssue(cluster, {
         type    : 'esDown',
         title   : 'ES is unreachable',
-        text    : message,
+        value    : message,
         severity: 'red'
-      });
+      });      
 
       cluster.statsError = message;
       return resolve();
@@ -802,6 +803,29 @@ router.put('/groups/:groupId/clusters/:clusterId', verifyToken, (req, res, next)
   writeParliament(req, res, next, successObj, errorText);
 });
 
+// Get a list of issues
+router.get('/issues', (req, res, next) => {
+  let issues = [];
+
+  for(let group of parliament.groups) {
+    for (let cluster of group.clusters) {
+      if (cluster.issues) {
+        for (let issue of cluster.issues) {
+          if (issue && !issue.dismissed) {
+            let issueClone = JSON.parse(JSON.stringify(issue));
+            issueClone.groupId = group.id;
+            issueClone.clusterId = cluster.id;
+            issueClone.cluster = cluster.title;
+            issues.push(issueClone);
+          }
+        }
+      }
+    }
+  }
+
+  return res.json({ issues:issues });
+});
+
 // Dismiss an issue with a cluster
 router.put('/groups/:groupId/clusters/:clusterId/dismissIssue', (req, res, next) => {
   if (!req.body.type) {
@@ -855,34 +879,28 @@ router.put('/groups/:groupId/clusters/:clusterId/ignoreIssue', (req, res, next) 
   writeParliament(req, res, next, successObj, errorText);
 });
 
-// Allow an issue with a cluster to alert
-router.put('/groups/:groupId/clusters/:clusterId/issues/:type/allow', (req, res, next) => {
-  let foundIssue = false;
-  for(let group of parliament.groups) {
-    if (group.id === parseInt(req.params.groupId)) {
-      for (let cluster of group.clusters) {
-        if (cluster.id === parseInt(req.params.clusterId)) {
-          if (cluster.issues) {
-            let alert = cluster.issues[req.params.type];
-            if (alert) {
-              alert.dismissed = undefined;
-              foundIssue = true;
-              break;
-            }
-          }
-        }
-      }
-    }
+// Allow an issue with a cluster to alert by removing ignoreUntil
+router.put('/groups/:groupId/clusters/:clusterId/removeIgnoreIssue', (req, res, next) => {
+  if (!req.body.type) {
+    let message = 'Must specify the issue type to remove the ignore.';
+    const error = new Error(message);
+    error.httpStatusCode = 422;
+    return next(error);
   }
 
-  if (!foundIssue) {
-    const error = new Error('Unable to find issue to allow.');
+  let issue = findIssue(parseInt(req.params.groupId), parseInt(req.params.clusterId), req.body.type, req.body.node);
+
+  if (!issue) {
+    const error = new Error('Unable to find issue to remove the ignore.');
     error.httpStatusCode = 500;
     return next(error);
   }
 
-  let successObj  = { success:true, text:'Successfully allowed the requested issue.' };
-  let errorText   = 'Unable to allow that issue.';
+  issue.ignoreUntil = undefined;
+  issue.alerted     = undefined; // reset alert time so it can alert again
+
+  let successObj  = { success:true, text:'Successfully removed the ignore for the requested issue.' };
+  let errorText   = 'Unable to remove the ignore for that issue.';
   writeParliament(req, res, next, successObj, errorText);
 });
 
