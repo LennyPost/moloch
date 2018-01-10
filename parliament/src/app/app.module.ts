@@ -15,6 +15,7 @@ import { IssuesComponent } from './issues.component';
 import { CommaStringPipe, IssueValuePipe } from './app.pipes';
 import { TokenInterceptor } from './token.interceptor';
 import { AuthService } from './auth.service';
+import { ParliamentService } from './parliament.service';
 import { AutofocusDirective } from './directives';
 
 
@@ -46,6 +47,7 @@ const appRoutes: Routes = [
   bootstrap   : [ AppComponent ],
   providers   : [
     AuthService,
+    ParliamentService,
     {
       provide   : HTTP_INTERCEPTORS,
       useClass  : TokenInterceptor,

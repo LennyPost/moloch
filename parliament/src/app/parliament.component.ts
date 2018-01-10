@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { trigger, style, transition, animate, keyframes, query } from '@angular/animations';
 
 import { TimerObservable } from 'rxjs/observable/TimerObservable';
@@ -11,7 +11,6 @@ import { Auth, Login } from './auth';
 @Component({
   templateUrl : './parliament.html',
   styleUrls   : [ './parliament.css' ],
-  providers   : [ ParliamentService ],
   animations  : [
     trigger('clusters', [
       transition('* => *', [
@@ -31,30 +30,40 @@ import { Auth, Login } from './auth';
     ])
   ]
 })
-export class ParliamentComponent implements OnInit {
+export class ParliamentComponent implements OnInit, OnDestroy {
 
   /* setup ----------------------------------------------------------------- */
-  private sub;
+  // subscriber for timer that issues requests for the parliament
+  private timerSubscriber;
+  // subscriber for the refresh interval variable
+  private refreshIntervalSubscriber;
+  // timeout for debouncing the search input
   private timeout;
+  // save old parliament for when reordering items in the parliament fails
   private oldParliamentOrder;
+  // data refresh interval default
+  private refreshInterval = '15000';
+  // whether the parliament data has been initialized
+  private initialized = false;
 
+  // display error messages
+  error = '';
+
+  // page data
   parliament = { groups: [] };
 
-  initialized = false;
-  updatingPassword = false;
-  password = '';
-  passwordConfirm = '';
-  error = '';
-  loggedIn = false;
-  showLoginInput = false;
-  auth: Auth = { hasAuth: false };
-  refreshInterval = '15000';
+  // search term input default
   searchTerm = '';
+
+  // keeps track of the number of filtered clusters (from search input)
+  numFilteredClusters: number;
+
+  // new group form variales
   showNewGroupForm = false;
   newGroupTitle = '';
   newGroupDescription = '';
-  numFilteredClusters: number;
-  focusOnPasswordInput = false;
+
+  // dnd flags to manage where a user can drag/drop clusters/groups
   dragClusters = true;
   dragGroups = true;
 
@@ -62,30 +71,30 @@ export class ParliamentComponent implements OnInit {
     private parliamentService: ParliamentService,
     private authService: AuthService
   ) {
-    authService.loggedIn$.subscribe((loggedIn) => {
-      this.loggedIn = loggedIn;
-    });
+    this.refreshIntervalSubscriber = parliamentService.refreshInterval$.subscribe(
+      (interval) => {
+        this.refreshInterval = interval;
+
+        if (this.refreshInterval) {
+         if (this.initialized) { this.loadData(); }
+         this.startAutoRefresh();
+       } else {
+         this.stopAutoRefresh();
+       }
+      }
+    );
   }
 
   ngOnInit() {
-    this.authService.hasAuth()
-      .subscribe((response) => {
-        this.auth.hasAuth = response.hasAuth;
-      });
-
-    this.loggedIn = this.authService.isLoggedIn();
-
-    if (localStorage.getItem('refreshInterval') !== null) {
-      this.refreshInterval = localStorage.getItem('refreshInterval');
-    }
-
     this.loadData();
+  }
 
-    if (this.refreshInterval) { this.startAutoRefresh(); }
+  ngOnDestroy() {
+    this.stopAutoRefresh();
+    this.refreshIntervalSubscriber.unsubscribe();
   }
 
   /* controller functions -------------------------------------------------- */
-
   // Loads the parliament or displays an error
   loadData() {
     this.parliamentService.getParliament()
@@ -94,7 +103,6 @@ export class ParliamentComponent implements OnInit {
           this.error = '';
           this.updateParliament(data);
           this.filterClusters();
-          // save old parliament for when reordering items in the parliament fails
           this.oldParliamentOrder = JSON.parse(JSON.stringify(this.parliament));
         },
         (err) => {
@@ -108,13 +116,13 @@ export class ParliamentComponent implements OnInit {
   startAutoRefresh() {
     if (!this.refreshInterval) { return; }
     const timer = TimerObservable.create(parseInt(this.refreshInterval, 10), parseInt(this.refreshInterval, 10));
-    this.sub = timer.subscribe(() => {
+    this.timerSubscriber = timer.subscribe(() => {
       if (this.refreshInterval) { this.loadData(); }
     });
   }
 
   stopAutoRefresh() {
-    if (this.sub) { this.sub.unsubscribe(); }
+    if (this.timerSubscriber) { this.timerSubscriber.unsubscribe(); }
   }
 
   // Updates fetched parliament with current view flags and values
@@ -213,108 +221,6 @@ export class ParliamentComponent implements OnInit {
   /* page functions -------------------------------------------------------- */
   getTrackingId(index, item) {
     return item.id;
-  }
-
-  login() {
-    this.showLoginInput = !this.showLoginInput;
-    this.focusOnPasswordInput = this.showLoginInput;
-
-    if (!this.showLoginInput) {
-      if (!this.password) {
-        this.error = 'Must provide a password to login.';
-        return;
-      }
-
-      this.authService.login(this.password)
-        .subscribe(
-          (data) => {
-            this.error    = '';
-            this.password = '';
-            this.loggedIn = this.authService.saveToken(data.token);
-          },
-          (err) => {
-            this.password = '';
-            this.loggedIn = false;
-            this.error    = err.error.text || 'Unable to login';
-            this.loggedIn = this.authService.saveToken('');
-          }
-        );
-    }
-  }
-
-  cancelLogin() {
-    this.showLoginInput       = false;
-    this.focusOnPasswordInput = false;
-    this.updatingPassword     = false;
-    this.passwordConfirm      = '';
-    this.password             = '';
-    this.error                = '';
-  }
-
-  logout() {
-    this.loggedIn = false;
-    localStorage.setItem('token', ''); // clear token
-  }
-
-  updatePassword() {
-    this.updatingPassword     = !this.updatingPassword;
-    this.showLoginInput       = !this.showLoginInput;
-    this.focusOnPasswordInput = this.showLoginInput;
-
-    if (!this.showLoginInput) {
-      if (!this.password) {
-        this.error = 'Must provide a password.';
-        return;
-      }
-
-      if (!this.passwordConfirm) {
-        this.error = 'Must confirm your password.';
-        return;
-      }
-
-      if (this.password !== this.passwordConfirm) {
-        this.error = 'Passwords must match.';
-        this.password = '';
-        this.passwordConfirm = '';
-        return;
-      }
-
-      this.authService.updatePassword(this.password)
-        .subscribe(
-          (data) => {
-            this.error    = '';
-            this.password = '';
-            this.auth.hasAuth = true;
-            this.loggedIn     = this.authService.saveToken(data.token);
-          },
-          (err) => {
-            console.error('update password error:', err);
-            this.password = '';
-            this.loggedIn = false;
-            this.error    = err.error.text || 'Unable to update your password.';
-            this.loggedIn = this.authService.saveToken('');
-          }
-        );
-    }
-  }
-
-  // Fired when the user clicks enter on the password input
-  passwordInputSubmit() {
-    if (this.updatingPassword) {
-      this.updatePassword();
-    } else { this.login(); }
-  }
-
-  // Fired when interval refresh select input is changed
-  changeRefreshInterval() {
-    localStorage.setItem('refreshInterval', this.refreshInterval);
-
-    if (this.refreshInterval) {
-      this.loadData();
-      this.startAutoRefresh();
-    } else {
-      this.stopAutoRefresh();
-    }
   }
 
   debounceSearch() {

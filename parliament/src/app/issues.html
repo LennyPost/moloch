@@ -1,14 +1,4 @@
-<div class="container-fluid mt-4">
-
-  <h2>
-    <!-- back to parliament button -->
-    <a class="btn btn-outline-primary pull-right" routerLink="">
-      <span class="fa fa-arrow-left"></span>&nbsp;
-      Back to Parliament
-    </a> <!-- /back to parliament button -->
-    <span class="fa fa-bell"></span>&nbsp;
-    Moloch Parliament Issues
-  </h2>
+<div>
 
   <!-- page error -->
   <div class="alert alert-danger" *ngIf="error">
@@ -20,8 +10,6 @@
     </button>
   </div> <!-- /page error -->
 
-  <hr>
-
   <table class="table table-hover table-sm">
   <thead>
     <tr>
@@ -30,7 +18,7 @@
       <th scope="col">Value</th>
       <th scope="col">Node</th>
       <th scope="col">Ignore Until</th>
-      <th scope="col" width="100px" *ngIf="loggedIn">&nbsp;</th>
+      <th scope="col" width="100px" *ngIf="authService.loggedIn">&nbsp;</th>
     </tr>
   </thead>
   <tbody>
@@ -40,7 +28,7 @@
       <td>{{ issue.value | issueValue: issue.type }}</td>
       <td>{{ issue.node }}</td>
       <td>{{ issue.ignoreUntil | date: 'yyyy/MM/dd HH:mm:ss' }}</td>
-      <td *ngIf="loggedIn">
+      <td *ngIf="authService.loggedIn">
         <!-- dismiss issue button -->
         <button type="button" class="btn btn-outline-danger btn-xs pull-right cursor-pointer ml-2"
           placement="bottom-right" ngbTooltip="Dismiss this issue for 24 hours"

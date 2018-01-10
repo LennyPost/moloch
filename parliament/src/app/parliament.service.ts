@@ -2,13 +2,28 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 
 import { Observable } from 'rxjs/Observable';
+import { BehaviorSubject } from 'rxjs/BehaviorSubject';
+import { Subject } from 'rxjs/Subject';
 
 import { Parliament, GroupCreated, ClusterCreated, Response, Issues } from './parliament';
 
 @Injectable()
 export class ParliamentService {
 
-  constructor(private http: HttpClient) {}
+  refreshInterval = new BehaviorSubject<string>('15000');
+  refreshInterval$ = this.refreshInterval.asObservable();
+
+  constructor(private http: HttpClient) {
+    const interval = localStorage.getItem('refreshInterval');
+    if (interval !== null) {
+      this.setRefreshInterval(interval);
+    }
+  }
+
+  setRefreshInterval(interval: string): void {
+    this.refreshInterval.next(interval);
+    localStorage.setItem('refreshInterval', interval);
+  }
 
   getParliament(): Observable<Parliament> {
     return this.http.get<Parliament>('api/parliament');

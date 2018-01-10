@@ -1,32 +1,53 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+
+import { TimerObservable } from 'rxjs/observable/TimerObservable';
 
 import { ParliamentService } from './parliament.service';
 import { AuthService } from './auth.service';
 
 @Component({
-  templateUrl : './issues.html',
-  providers   : [ ParliamentService ]
+  templateUrl: './issues.html'
 })
-export class IssuesComponent implements OnInit {
+export class IssuesComponent implements OnInit, OnDestroy {
 
   /* setup ----------------------------------------------------------------- */
+  // subscriber for timer that issues requests for issues
+  private timerSubscriber;
+  // subscriber for the refresh interval variable
+  private refreshIntervalSubscriber;
+  // data refresh interval default
+  private refreshInterval = '15000';
+  // whether the issue data has been initialized
+  private initialized = false;
+
   error = '';
   issues = [];
-  loggedIn = false;
 
   constructor(
     private parliamentService: ParliamentService,
     private authService: AuthService
   ) {
-    authService.loggedIn$.subscribe((loggedIn) => {
-      this.loggedIn = loggedIn;
-    });
+    this.refreshIntervalSubscriber = parliamentService.refreshInterval$.subscribe(
+      (interval) => {
+        this.refreshInterval = interval;
+
+        if (this.refreshInterval) {
+         if (this.initialized) { this.loadData(); }
+         this.startAutoRefresh();
+       } else {
+         this.stopAutoRefresh();
+       }
+      }
+    );
   }
 
   ngOnInit() {
-    this.loggedIn = this.authService.isLoggedIn();
-
     this.loadData();
+  }
+
+  ngOnDestroy() {
+    this.stopAutoRefresh();
+    this.refreshIntervalSubscriber.unsubscribe();
   }
 
   /* controller functions -------------------------------------------------- */
@@ -40,6 +61,18 @@ export class IssuesComponent implements OnInit {
           this.error = err.error.text || 'Error fetching issues. The issues below are likely out of date';
         }
       );
+  }
+
+  startAutoRefresh() {
+    if (!this.refreshInterval) { return; }
+    const timer = TimerObservable.create(parseInt(this.refreshInterval, 10), parseInt(this.refreshInterval, 10));
+    this.timerSubscriber = timer.subscribe(() => {
+      if (this.refreshInterval) { this.loadData(); }
+    });
+  }
+
+  stopAutoRefresh() {
+    if (this.timerSubscriber) { this.timerSubscriber.unsubscribe(); }
   }
 
   /* page functions -------------------------------------------------------- */
