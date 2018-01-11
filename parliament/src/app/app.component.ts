@@ -30,7 +30,7 @@ export class AppComponent implements OnInit {
 
   constructor(
     private parliamentService: ParliamentService,
-    private authService: AuthService
+    public authService: AuthService
   ) {
     parliamentService.refreshInterval$.subscribe((interval) => {
       this.refreshInterval = interval;

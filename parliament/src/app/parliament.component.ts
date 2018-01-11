@@ -69,7 +69,7 @@ export class ParliamentComponent implements OnInit, OnDestroy {
 
   constructor(
     private parliamentService: ParliamentService,
-    private authService: AuthService
+    public authService: AuthService
   ) {
     this.refreshIntervalSubscriber = parliamentService.refreshInterval$.subscribe(
       (interval) => {
