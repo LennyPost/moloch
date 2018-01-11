@@ -22,9 +22,9 @@ export class IssueValuePipe implements PipeTransform {
 
     if (input === undefined) { return ''; }
 
-    if (type === 'esDropped') { // apply comma string pipe
+    if (type === 'esDropped') {
       result = new CommaStringPipe().transform(input);
-    } else if (type === 'outOfDate') { // TODO apply date pipe
+    } else if (type === 'outOfDate') {
       result = new DatePipe('en-US').transform(input, 'yyyy/MM/dd HH:mm:ss');
     }
 

@@ -414,9 +414,9 @@ function getStats(cluster) {
       setIssue(cluster, {
         type    : 'esDown',
         title   : 'ES is unreachable',
-        value    : message,
+        value   : message,
         severity: 'red'
-      });      
+      });
 
       cluster.statsError = message;
       return resolve();
