@@ -297,3 +297,4 @@ Currently upgrading from previous versions of Moloch is a manual process, howeve
 * Make sure ES is running and update the database using the "db/db.pl host:port upgrade" script
 * Start the new capture and viewer processes
 
+This is a test!
